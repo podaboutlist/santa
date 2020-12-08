@@ -16,18 +16,21 @@
 #  You should have received a copy of the GNU Affero General Public License
 #  along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-import discord
 import json
-import typing
 from discord.ext import commands
-from pony import orm
+# from pony import orm
 
 
-bot_token = None
+# cogs = ['santabot.cogs.give', 'santabot.cogs.global', 'santabot.cogs.help',
+#        'santabot.cogs.invite', 'santabot.cogs.my']
+cogs = ['santabot.cogs.give']
 
-with(open('config/config.json', 'r')) as cfg_file:
-    cfg = json.load(cfg_file)
-    bot_token = cfg['bot']['token']
+
+def load_config_file(filename):
+    # TODO: try/except for when the file is missing
+    with(open('config/config.json', 'r')) as cfg_file:
+        return json.load(cfg_file)
+
 
 santa = commands.Bot(command_prefix=commands.when_mentioned)
 
@@ -37,23 +40,16 @@ async def on_ready():
     print('> Santa Bot is online!')
 
 
-@santa.command()
-async def give(ctx, recipient: typing.Union[discord.Member, str], *args):
-    if isinstance(recipient, discord.Member):
-        await ctx.send('Ho ho ho {0}, check under your tree for {1} from {2}'
-                       .format(recipient.mention,
-                               " ".join(args),
-                               ctx.author.mention))
-    else:
-        await ctx.send('Ho ho ho! Check under your tree for {0}!'
-                       .format(" ".join(args)))
+if __name__ == '__main__':
+    print('> Loading Santa Bot config from file...')
+    cfg = load_config_file('config/config.json')
+    bot_token = cfg['bot']['token']
 
+    print('> Loading cogs...')
+    for cog in cogs:
+        # TODO: Error handling when loading cogs
+        santa.load_extension(cog)
+        print('> Loaded cog ', cog)
 
-@santa.command()
-async def please(ctx, _, recipient: typing.Union[discord.Member, str], *args):
-    await give(ctx, recipient, *args[1:])
-    await ctx.send('Thank you for saying please!')
-
-
-print('> Starting Santa Bot...')
-santa.run(bot_token)
+    print('> Logging into Discord...')
+    santa.run(bot_token)
