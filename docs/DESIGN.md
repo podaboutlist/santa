@@ -144,6 +144,10 @@ listed attributes:
    - `stolen` (`BOOLEAN NOT NULL`) - if the present was stolen by the Grinch
    - `date_received` (`TIMESTAMP NOT NULL`) - when the present was given
 
+### C. `servers`
+   - `id` (`BIGINT PRIMARY KEY`) - server's ID from Discord
+   - `webhook` (`TEXT`) - Grinch Webhook URL for the server
+
 
 ## 5. Tech Stack
 
