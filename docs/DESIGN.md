@@ -140,7 +140,8 @@ listed attributes:
    - `id` (`INTEGER PRIMARY KEY`)
    - `name` (`TEXT`) - the name of the present
    - `owner` (`FOREIGN KEY(users) NOT NULL`) - the User who owns the present
-   - `gifter` (`FOREIGN KEY(users) NOT NULL`) - the User who gifted the present
+   - `gifter` (`FOREIGN KEY(users)`) - the User who gifted the present (optional)
+     - If `gifter` is `null` we attribute the gift to Santa.
    - `stolen` (`BOOLEAN NOT NULL`) - if the present was stolen by the Grinch
    - `date_received` (`TIMESTAMP NOT NULL`) - when the present was given
 
