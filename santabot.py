@@ -16,23 +16,21 @@
 #  You should have received a copy of the GNU Affero General Public License
 #  along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-import json
 from discord.ext import commands
+from dotenv import load_dotenv
+from os import getenv
 # from pony import orm
 
+
+load_dotenv()
 
 # cogs = ['santabot.cogs.give', 'santabot.cogs.global', 'santabot.cogs.help',
 #        'santabot.cogs.invite', 'santabot.cogs.my']
 cogs = ['santabot.cogs.give', 'santabot.cogs.grinch']
-
-
-def load_config_file(filename):
-    # TODO: try/except for when the file is missing
-    with(open('config/config.json', 'r')) as cfg_file:
-        return json.load(cfg_file)
-
-
-santa = commands.Bot(command_prefix=commands.when_mentioned)
+santa = commands.Bot(
+    command_prefix=commands.when_mentioned,
+    owner_id=getenv('BOT_OWNER_ID')
+)
 
 
 @santa.event
@@ -41,9 +39,8 @@ async def on_ready():
 
 
 if __name__ == '__main__':
-    print('> Loading Santa Bot config from file...')
-    cfg = load_config_file('config/config.json')
-    bot_token = cfg['bot']['token']
+    print('> Starting Santa Bot...')
+    bot_token = getenv('BOT_TOKEN')
 
     print('> Loading cogs...')
     for cog in cogs:

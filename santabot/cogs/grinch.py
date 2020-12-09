@@ -17,22 +17,24 @@
 
 import discord
 from discord.ext import commands
+from os import getenv
 
 
 class GrinchManager():
-    def __init__(self, webhook, avatar_url='https://i.imgur.com/orRBRzi.png'):
+    def __init__(self, webhook: discord.Webhook, name: str, avatar_url: str):
         """Wrapper class for webhook logic that powers the Grinch's messages.
 
         Args:
             webhook (discord.Webhook): The Webhook for sending messages.
-            avatar_url (str, optional): The URL of the Webhook avatar.
-                Defaults to 'https://i.imgur.com/orRBRzi.png'.
+            name (str): The display name of the Webhook
+            avatar_url (str): The URL of the Webhook's avatar.
         """
-        # TODO: make this webhook persistent
+        # TODO: Persist webhook data in the database
         self.webhook = webhook
+        self.name = name
         self.avatar_url = avatar_url
 
-    async def send_message(self, message):
+    async def send_message(self, message: str):
         """Sends a message as the Grinch using a webhook.
 
         Args:
@@ -40,23 +42,23 @@ class GrinchManager():
         """
         await self.webhook.send(
             content=message,
-            avatar_url=avatar_url
+            username=self.name,
+            avatar_url=self.avatar_url
         )
 
-    async def die(self, killer):
+    async def die(self, killer: str):
         """Remove the Grinch webhook
 
         Args:
             killer (str): The user who killed the Grinch
         """
         await self.webhook.delete(
-                reason='{0} banished the Grinch'.format(killer)
-            )
-        print('> {0} banished the Grinch.')
+            reason='{0} banished the Grinch'.format(killer)
+        )
 
 
 class GrinchCommands(commands.Cog):
-    def __init__(self, bot):
+    def __init__(self, bot: discord.ext.commands.Bot):
         """Parent class for commands that manage the Grinch webhook.
 
         Args:
@@ -67,7 +69,7 @@ class GrinchCommands(commands.Cog):
 
     @commands.group()
     @commands.has_permissions(manage_messages=True)
-    async def grinch(self, ctx):
+    async def grinch(self, ctx: discord.ext.commands.Context):
         """@santa grinch - Base command for Grinch webhook management commands.
 
         Args:
@@ -83,7 +85,7 @@ class GrinchCommands(commands.Cog):
 
     @grinch.command()
     @commands.has_permissions(manage_messages=True)
-    async def summon(self, ctx):
+    async def summon(self, ctx: discord.ext.commands.Context):
         """@santa grinch summon - Creates a webhook to send Grinch messages
 
         Args:
@@ -91,26 +93,31 @@ class GrinchCommands(commands.Cog):
         """
         await ctx.channel.trigger_typing()
 
+        webhook_name = getenv('WEBHOOK_NAME')
+        webhook_avi_url = getenv('WEBHOOK_AVATAR_URL')
+
         try:
             webhook = await ctx.channel.create_webhook(
-                name='The Grinch',
-                reason='{0} summoned the Grinch'
-                       .format(ctx.author.display_name)
+                name=webhook_name,
+                reason='{0} summoned {1}'
+                       .format(ctx.author.display_name, webhook_name)
             )
         except discord.Forbidden:
             await ctx.send("I can't create a webhook for this channel.")
             return
 
-        print('Webhook created for channel {0}'.format(ctx.channel.name))
+        print('> {0}#{1} ({2}) created Webhook for channel #{3} ({4})'
+              .format(ctx.author.name, ctx.author.discriminator,
+                      ctx.author.mention, ctx.channel.name, ctx.channel.id))
 
-        self.grinch = GrinchManager(webhook)
+        self.grinch = GrinchManager(webhook, webhook_name, webhook_avi_url)
         await ctx.send('{0} summoned the Grinch!'.format(ctx.author.mention))
         await self.grinch.send_message('Whats up lol im the Grinch.')
         await self.grinch.send_message('im here to steal your presents')
 
     @grinch.command()
     @commands.has_permissions(manage_messages=True)
-    async def banish(self, ctx):
+    async def banish(self, ctx: discord.ext.commands.Context):
         """@santa grinch banish - deletes the Grinch webhook
 
         Args:
@@ -118,6 +125,11 @@ class GrinchCommands(commands.Cog):
         """
         try:
             await self.grinch.die(ctx.author.display_name)
+            print('> {0}#{1} ({2}) banished the Grinch.'.format(
+                ctx.author.name,
+                ctx.author.discriminator,
+                ctx.author.mention
+            ))
         except discord.Forbidden:
             await ctx.send("Please give me the `manage webhook` permission.")
         else:
@@ -125,5 +137,5 @@ class GrinchCommands(commands.Cog):
                            .format(ctx.author.mention))
 
 
-def setup(bot):
+def setup(bot: discord.ext.commands.Bot):
     bot.add_cog(GrinchCommands(bot))
