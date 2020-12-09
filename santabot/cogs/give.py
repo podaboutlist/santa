@@ -21,12 +21,22 @@ from discord.ext import commands
 
 
 class Give(commands.Cog):
+    """Parent class for commands that request presents.
+    """
     def __init__(self, bot):
         self.bot = bot
 
     @commands.command()
     async def give(self, ctx,
                    recipient: typing.Union[discord.Member, str], *args):
+        """Command to request a present for oneself or another User
+
+        Args:
+            ctx (discord.ext.commands.Context): Discord.py command context.
+            recipient (typing.Union[discord.Member, str]): Either the recipient
+                of the present (a Member), or the first word of the Present.
+            *args: Words describing the Present.
+        """
         await ctx.channel.trigger_typing()
 
         if isinstance(recipient, discord.Member):
@@ -43,6 +53,15 @@ class Give(commands.Cog):
     async def please(self, ctx, _,
                      recipient: typing.Union[discord.Member, str],
                      *args):
+        """Command for pleasantly asking for a present.
+
+        Args:
+            ctx (discord.ext.commands.Context): Discord.py command context.
+            _ ([type]): The `give` prefix. Not used.
+            recipient (typing.Union[discord.Member, str]): Either the recipient
+                of the present (a Member), or the first word of the Present.
+            *args: Words describing the Present.
+        """
         await ctx.channel.trigger_typing()
 
         await self.give(ctx, recipient, *args)
