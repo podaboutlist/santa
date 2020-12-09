@@ -66,6 +66,7 @@ class GrinchCommands(commands.Cog):
         self.grinch = None
 
     @commands.group()
+    @commands.has_permissions(manage_messages=True)
     async def grinch(self, ctx):
         """@santa grinch - Base command for Grinch webhook management commands.
 
@@ -81,6 +82,7 @@ class GrinchCommands(commands.Cog):
             await ctx.send('Usage: `grinch <summon/banish>`')
 
     @grinch.command()
+    @commands.has_permissions(manage_messages=True)
     async def summon(self, ctx):
         """@santa grinch summon - Creates a webhook to send Grinch messages
 
@@ -107,6 +109,7 @@ class GrinchCommands(commands.Cog):
         await self.grinch.send_message('im here to steal your presents')
 
     @grinch.command()
+    @commands.has_permissions(manage_messages=True)
     async def banish(self, ctx):
         """@santa grinch banish - deletes the Grinch webhook
 
