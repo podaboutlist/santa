@@ -66,6 +66,8 @@ class GrinchCommands(commands.Cog):
         """
         self.bot = bot
         self.grinch = None
+        self.webhook_name = getenv('WEBHOOK_NAME')
+        self.webhook_avi_url = getenv('WEBHOOK_AVATAR_URL')
 
     @commands.group()
     @commands.has_permissions(manage_messages=True)
@@ -93,14 +95,11 @@ class GrinchCommands(commands.Cog):
         """
         await ctx.channel.trigger_typing()
 
-        webhook_name = getenv('WEBHOOK_NAME')
-        webhook_avi_url = getenv('WEBHOOK_AVATAR_URL')
-
         try:
             webhook = await ctx.channel.create_webhook(
-                name=webhook_name,
+                name=self.webhook_name,
                 reason='{0} summoned {1}'
-                       .format(ctx.author.display_name, webhook_name)
+                       .format(ctx.author.display_name, self.webhook_name)
             )
         except discord.Forbidden:
             await ctx.send("I can't create a webhook for this channel.")
@@ -110,7 +109,11 @@ class GrinchCommands(commands.Cog):
               .format(ctx.author.name, ctx.author.discriminator,
                       ctx.author.mention, ctx.channel.name, ctx.channel.id))
 
-        self.grinch = GrinchManager(webhook, webhook_name, webhook_avi_url)
+        self.grinch = GrinchManager(
+            webhook,
+            self.webhook_name,
+            self.webhook_avi_url
+        )
         await ctx.send('{0} summoned the Grinch!'.format(ctx.author.mention))
         await self.grinch.send_message('Whats up lol im the Grinch.')
         await self.grinch.send_message('im here to steal your presents')
