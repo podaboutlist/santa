@@ -23,7 +23,7 @@ from discord.ext import commands
 
 # cogs = ['santabot.cogs.give', 'santabot.cogs.global', 'santabot.cogs.help',
 #        'santabot.cogs.invite', 'santabot.cogs.my']
-cogs = ['santabot.cogs.give']
+cogs = ['santabot.cogs.give', 'santabot.cogs.grinch']
 
 
 def load_config_file(filename):

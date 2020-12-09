@@ -3,6 +3,11 @@
         "token": "<YOUR BOT TOKEN HERE>",
         "owner": "143123353249513472"
     },
+    "webhook": {
+        "_comment": "NB: Not implemented yet.",
+        "name": "The Grinch",
+        "avatar_url": "https://i.imgur.com/orRBRzi.png"
+    },
     "database": {
         "hostname": "127.0.0.1",
         "port": "5432",

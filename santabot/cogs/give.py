@@ -27,9 +27,11 @@ class Give(commands.Cog):
     @commands.command()
     async def give(self, ctx,
                    recipient: typing.Union[discord.Member, str], *args):
+        await ctx.channel.trigger_typing()
+
         if isinstance(recipient, discord.Member):
             await ctx.send(
-                'Ho ho ho {0}, check under your tree for {1} from {2}'
+                'Ho ho ho {0}, check under your tree for {1} from {2}!'
                 .format(recipient.mention,
                         " ".join(args),
                         ctx.author.mention))
@@ -41,6 +43,8 @@ class Give(commands.Cog):
     async def please(self, ctx, _,
                      recipient: typing.Union[discord.Member, str],
                      *args):
+        await ctx.channel.trigger_typing()
+
         await self.give(ctx, recipient, *args)
         await ctx.send('Thank you for saying please!')
 
