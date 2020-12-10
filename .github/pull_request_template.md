@@ -7,16 +7,17 @@
 -->
 
 
-### Description of Added Feature
+### Description of PR
 
+<!-- Optional -->
 Related issue(s): #<234>, #<567>, ...
 
-<!-- Write a few sentences describing the feature this PR adds. -->
+<!-- Write a few sentences describing the purpose of your PR. -->
 
 
-### Affected Functionality
+### Affected Components
 
-This PR changes or adds functionality to:
+This PR adds functionality to, modifies the functionality of, or fixes an issue with:
 
 <!-- Please check any/all that apply by replacing [ ] with [x] -->
 

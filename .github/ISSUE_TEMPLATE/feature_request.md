@@ -1,3 +1,12 @@
+---
+name: Feature request
+about: Suggest features we should add
+title: ''
+labels: enhancement
+assignees: ''
+
+---
+
 <!--
     Hello! Thank you notifying us of an issue. Please fill out the
     sections below, making sure to follow the instructions you see in these
