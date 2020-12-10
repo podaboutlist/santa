@@ -34,7 +34,9 @@ class Invite(commands.Cog):
             "This bot was made by and is hosted by "
             "the Podcast About List Code Monkeys\n"
             "Check out the GitHub repo here: "
-            "https://github.com/Podcast-About-List/santa"
+            "https://github.com/Podcast-About-List/santa\n"
+            "Join the Podcast About List discord here: "
+            "https://podaboutli.st/discord"
         )
 
 
