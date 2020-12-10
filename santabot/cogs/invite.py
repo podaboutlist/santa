@@ -30,8 +30,10 @@ class Invite(commands.Cog):
         :param ctx: command context
         """
         await ctx.channel.trigger_typing()
-        await ctx.send("This bot was made by and is hosted by the Podcast About List Code Monkeys"
-                       "\nCheck out the GitHub repo here: https://github.com/Podcast-About-List/santa")
+        await ctx.send("This bot was made by and is hosted by "
+                       "the Podcast About List Code Monkeys"
+                       "\nCheck out the GitHub repo here: "
+                       "https://github.com/Podcast-About-List/santa")
 
 
 def setup(bot):
