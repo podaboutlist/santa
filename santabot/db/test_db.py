@@ -3,17 +3,20 @@ from datetime import datetime, timedelta
 from models import db
 
 
-# not sure how we want to set the db up
-db.bind(provider='sqlite', filename=':memory:')
-
-
-db.generate_mapping(create_tables=True)
-
-
-# test db
+# HACK: We should use a real unit testing library with real unit tests
+#       instead of rolling our own like I did here.
 if __name__ == '__main__':
-    print('> Enabling SQL debugging...')
+    print('--- Testing the Database ---')
+
+    print('\n> Enabling SQL debugging...')
     orm.set_sql_debug(True)
+
+    print('\n> Binding DB to SQLite instance in memory.')
+    db.bind(provider='sqlite', filename=':memory:')
+
+    print('\n> Generating DB mapping...')
+    db.generate_mapping(create_tables=True)
+    db.commit()
 
     with orm.db_session:
         # User IDs in the DB correspond to their Discord IDs
@@ -21,6 +24,8 @@ if __name__ == '__main__':
         u1 = db.User(id=143123353249513472)
         u2 = db.User(id=444183067678998540)
         u3 = db.User(id=293900315089174529)
+        # Issue explicit commits otherwise the DB will batch commits and the
+        # print() statements get out of sync.
         db.commit()
 
         print('\n> Generating Servers...')
@@ -53,3 +58,5 @@ if __name__ == '__main__':
            .filter(lambda present: present.gifter.id == u2.id) \
            .order_by(db.Present.id)[:] \
            .show()
+
+        print('\n> All tests passed!')
