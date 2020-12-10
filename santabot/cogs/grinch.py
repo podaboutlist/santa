@@ -60,6 +60,7 @@ class GrinchCommands(commands.Cog):
 
         Args:
             ctx (discord.ext.commands.Context): Discord.py command context.
+            from_cfg (str, optional): Uses webhook URL from config. For testing
         """
         await ctx.channel.trigger_typing()
 
