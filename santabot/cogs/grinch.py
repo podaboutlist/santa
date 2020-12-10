@@ -51,7 +51,10 @@ class GrinchCommands(commands.Cog):
 
     @grinch.command()
     @commands.has_permissions(manage_messages=True)
-    async def summon(self, ctx: discord.ext.commands.Context):
+    async def summon(self,
+                     ctx: discord.ext.commands.Context,
+                     *,
+                     from_cfg: str):
         """@santa grinch summon - Creates a webhook to send Grinch messages
 
         Args:
@@ -59,28 +62,43 @@ class GrinchCommands(commands.Cog):
         """
         await ctx.channel.trigger_typing()
 
-        try:
-            webhook = await ctx.channel.create_webhook(
-                name=self.webhook_name,
-                reason='{0} summoned {1}'
-                       .format(ctx.author.display_name, self.webhook_name)
-            )
-        except discord.Forbidden:
-            await ctx.send("I can't create a webhook for this channel.")
-            return
+        # Convert string command to boolean
+        from_cfg = from_cfg.lower() in ['from_cfg']
+        webhook = None
 
-        print('> {0}#{1} ({2}) created Webhook for channel #{3} ({4})'
-              .format(ctx.author.name, ctx.author.discriminator,
-                      ctx.author.mention, ctx.channel.name, ctx.channel.id))
+        if from_cfg:
+            # If we used @santa grinch summon from_cfg, we load the webhook URL
+            # from our .env config. This will be superceded when database
+            # storage and retrieval is developed.
+            webhook = getenv('WEBHOOK_URL')
+        else:
+            # Creates a Webhook for the text channel _and_ a Webhook object
+            # which we use for messaging.
+            try:
+                webhook = await ctx.channel.create_webhook(
+                    name=self.webhook_name,
+                    reason='{0} summoned {1}'.format(
+                        ctx.author.display_name,
+                        self.webhook_name
+                    )
+                )
+            except discord.Forbidden:
+                await ctx.send("I can't create a webhook for this channel.")
+                return
 
         self.grinch = GrinchManager(
             webhook,
             self.webhook_name,
             self.webhook_avi_url
         )
+
+        print('> {0}#{1} ({2}) created Webhook for channel #{3} ({4})'
+              .format(ctx.author.name, ctx.author.discriminator,
+                      ctx.author.mention, ctx.channel.name, ctx.channel.id))
+
         await ctx.send('{0} summoned the Grinch!'.format(ctx.author.mention))
-        await self.grinch.send_message('Whats up lol im the Grinch.')
-        await self.grinch.send_message('im here to steal your presents')
+        self.grinch.send_message('Whats up lol im the Grinch.')
+        self.grinch.send_message('im here to steal your presents')
 
     @grinch.command()
     @commands.has_permissions(manage_messages=True)
@@ -91,7 +109,7 @@ class GrinchCommands(commands.Cog):
             ctx (discord.ext.commands.Context): Discord.py command context.
         """
         try:
-            await self.grinch.die(ctx.author.display_name)
+            self.grinch.die(ctx.author.display_name)
             print('> {0}#{1} ({2}) banished the Grinch.'.format(
                 ctx.author.name,
                 ctx.author.discriminator,
@@ -102,6 +120,19 @@ class GrinchCommands(commands.Cog):
         else:
             await ctx.send('{0} banished the Grinch!'
                            .format(ctx.author.mention))
+            self.grinch = None
+
+    @grinch.command()
+    @commands.has_permissions(manage_messages=True)
+    async def say(self, ctx: discord.ext.commands.Context, *, msg: str):
+        """Make the Grinch say something. Used for debugging.
+
+        Args:
+            ctx (discord.ext.commands.Context): Discord.py command context.
+            msg (str): The message the Grinch will say.
+        """
+        if (self.grinch):
+            self.grinch.send_message(msg)
 
 
 def setup(bot: discord.ext.commands.Bot):
