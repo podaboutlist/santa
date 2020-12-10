@@ -16,6 +16,7 @@
 
 
 import discord
+import typing
 from discord.ext import commands
 from os import getenv
 from ..grinch_manager import GrinchManager
@@ -54,7 +55,7 @@ class GrinchCommands(commands.Cog):
     async def summon(self,
                      ctx: discord.ext.commands.Context,
                      *,
-                     from_cfg: str):
+                     from_cfg: typing.Optional[str]):
         """@santa grinch summon - Creates a webhook to send Grinch messages
 
         Args:
@@ -63,7 +64,9 @@ class GrinchCommands(commands.Cog):
         await ctx.channel.trigger_typing()
 
         # Convert string command to boolean
-        from_cfg = from_cfg.lower() in ['from_cfg']
+        if isinstance(from_cfg, str):
+            from_cfg = from_cfg.lower()
+        from_cfg = from_cfg in ['from_cfg']
         webhook = None
 
         if from_cfg:
@@ -86,6 +89,15 @@ class GrinchCommands(commands.Cog):
                 await ctx.send("I can't create a webhook for this channel.")
                 return
 
+            # The Webhook returned from create_webhook uses an async adapter,
+            # but we want it to be synchronous. To fix this, we construct a new
+            # Webhook object using our old one's ID and token.
+            webhook = discord.Webhook.partial(
+                webhook.id,
+                webhook.token,
+                adapter=discord.RequestsWebhookAdapter()
+            )
+
         self.grinch = GrinchManager(
             webhook,
             self.webhook_name,
@@ -97,8 +109,11 @@ class GrinchCommands(commands.Cog):
                       ctx.author.mention, ctx.channel.name, ctx.channel.id))
 
         await ctx.send('{0} summoned the Grinch!'.format(ctx.author.mention))
-        self.grinch.send_message('Whats up lol im the Grinch.')
-        self.grinch.send_message('im here to steal your presents')
+
+        self.grinch.send_message(
+            'Whats up lol im the Grinch.\n'
+            'im here to steal your presents'
+        )
 
     @grinch.command()
     @commands.has_permissions(manage_messages=True)
