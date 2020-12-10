@@ -15,3 +15,24 @@
 #  along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 from discord.ext import commands
+
+
+class Invite(commands.Cog):
+    """Parent class for inviting players to the github repo"""
+
+    def __init__(self, bot):
+        self.bot = bot
+
+    @commands.command()
+    async def invite(self, ctx):
+        """
+        Command for getting a link to the github repo
+        :param ctx: command context
+        """
+        await ctx.channel.trigger_typing()
+        await ctx.send("This bot was made by and is hosted by the Podcast About List Code Monkeys"
+                       "\nCheck out the GitHub repo here: https://github.com/Podcast-About-List/santa")
+
+
+def setup(bot):
+    bot.add_cog(Invite(bot))
