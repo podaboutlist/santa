@@ -1,6 +1,6 @@
 ---
-name: Feature request
-about: Suggest features we should add
+name: Feature/Change Request
+about: Suggest features we should add or change
 title: ''
 labels: enhancement
 assignees: ''
@@ -16,7 +16,7 @@ assignees: ''
 
 ### Description of the New Feature
 
-<!-- Please write a few sentences describing the feature this PR adds. -->
+<!-- Please write a few sentences describing the change you are requesting. -->
 
 <!-- Optional: Reference related feature requests. -->
 <!-- Delete this line if it doesn't apply. -->
@@ -37,6 +37,9 @@ This feature changes or adds functionality to:
    - [ ] CI
    - [ ] Other: <!-- Please add a description here if this box is checked -->
 
-   - [ ] My PR **does not** add any dependencies to `requirements.txt`
+   - [ ] My feature request **does not** add any external dependencies
 
-<!-- If your PR _does_ add dependencies, please explain why here -->
+<!--
+    If your request _does_ add external dependencies (i.e. it modifies
+    requirements.txt), please use this space to describe dependency's purpose.
+-->
