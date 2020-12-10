@@ -18,16 +18,18 @@ from discord.ext import commands
 
 
 class Invite(commands.Cog):
-    """Parent class for inviting players to the github repo"""
+    """Parent class for the invite command.
+    """
 
     def __init__(self, bot):
         self.bot = bot
 
     @commands.command()
-    async def invite(self, ctx):
-        """
-        Command for getting a link to the github repo
-        :param ctx: command context
+    async def invite(self, ctx: commands.Context):
+        """@santa invite: Returns developer info to the requester.
+
+        Args:
+            ctx (discord.ext.commands.Context): Discord.py command context.
         """
         await ctx.channel.trigger_typing()
         await ctx.send(
@@ -41,4 +43,5 @@ class Invite(commands.Cog):
 
 
 def setup(bot):
+
     bot.add_cog(Invite(bot))
