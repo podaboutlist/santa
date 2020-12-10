@@ -1,8 +1,12 @@
 language: python
+cache: pip
 python:
   - "3.6"
   - "3.7"
   - "3.8"
   - "3.9"
+before_install:
+  - pip install darglint pycodestyle
 script:
   - pycodestyle --verbose --show-source --show-pep8 --statistics .
+  - find . -name '*.py' | xargs darglint --verbosity 2 --docstring-style google --indentation 4 --log-level INFO
