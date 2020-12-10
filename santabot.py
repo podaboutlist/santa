@@ -19,7 +19,6 @@
 from discord.ext import commands
 from dotenv import load_dotenv
 from os import getenv
-# from pony import orm
 
 
 load_dotenv()

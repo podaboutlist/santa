@@ -1,56 +1,55 @@
-from pony.orm import *
+from pony import orm
 from datetime import datetime, timedelta
+from models import db
 
-db = Database()
 
 # not sure how we want to set the db up
 db.bind(provider='sqlite', filename=':memory:')
-
-
-class User(db.Entity):
-    id = PrimaryKey(int)
-    presents = Set("Present")
-    total_presents = Required(int, default=0, min=0)
-    stolen_presents = Required(int, default=0, min=0)
-    given_presents = Required(int, default=0, min=0)
-    steal_count = Required(int, default=0, min=0)
-    last_gift_datetime = Required(datetime, default=datetime(
-        year=2001, month=9, day=11, hour=8, minute=46))
-
-    def get_stats(self):
-        return self.total_presents,
-        self.stolen_presents,
-        self.given_presents,
-        self.total_snatches,
-        self.given_presents,
-        "Ready for presents" if self.last_gift_datetime < datetime.now() - \
-            timedelta(hours=1) else "Santa needs a break from yo needy ass"
-
-
-class Present(db.Entity):
-    id = PrimaryKey(int)
-    name = Required(str)
-    owner = Required(User)
-    gifter = Optional(int)
-    stolen = Required(bool, default=False)
-    please = Required(bool, default=False)
-    date_received = Required(datetime, default=datetime.now())
-    date_stolen = Optional(datetime)
-
-
-class Server(db.Entity):
-    id = PrimaryKey(int)
-    webhook_url = (str)
 
 
 db.generate_mapping(create_tables=True)
 
 
 # test db
-"""
-with db_session:
-    test = User(id=1)
-    x = User.get(id=1)
-    print(x.last_gift_datetime)
-    xx = x.get_stats()
-    print(xx) """
+if __name__ == '__main__':
+    print('> Enabling SQL debugging...')
+    orm.set_sql_debug(True)
+
+    with orm.db_session:
+        # User IDs in the DB correspond to their Discord IDs
+        print('\n> Generating Users...')
+        u1 = db.User(id=143123353249513472)
+        u2 = db.User(id=444183067678998540)
+        u3 = db.User(id=293900315089174529)
+        db.commit()
+
+        print('\n> Generating Servers...')
+        s1 = db.Server(id=142851181843185664)
+        db.commit()
+
+        print('\n> Generating Presents...')
+        p1 = db.Present(name="test present 01", owner=u1)
+        p2 = db.Present(name="test present 02", owner=u1, gifter=u2)
+        p3 = db.Present(name="test present 03", owner=u3, gifter=u2)
+        db.commit()
+
+        print('\n> Displaying all Users')
+        orm.select(u for u in db.User) \
+           .order_by(db.User.id)[:] \
+           .show()
+
+        print('\n> Displaying all Presents')
+        orm.select(p for p in db.Present) \
+           .order_by(db.Present.id)[:] \
+           .show()
+
+        print('\n> Displaying all Servers')
+        orm.select(s for s in db.Server) \
+           .order_by(db.Server.id)[:] \
+           .show()
+
+        print('\n> Selecting gifts given by u2')
+        orm.select(p for p in db.Present) \
+           .filter(lambda present: present.gifter.id == u2.id) \
+           .order_by(db.Present.id)[:] \
+           .show()
