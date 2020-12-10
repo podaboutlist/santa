@@ -24,9 +24,7 @@ from os import getenv
 
 load_dotenv()
 
-# cogs = ['santabot.cogs.give', 'santabot.cogs.global', 'santabot.cogs.help',
-#        'santabot.cogs.invite', 'santabot.cogs.my']
-cogs = ['santabot.cogs.give', 'santabot.cogs.grinch']
+cogs = ['give', 'grinch', 'invite']
 santa = commands.Bot(
     command_prefix=commands.when_mentioned,
     owner_id=getenv('BOT_OWNER_ID')
@@ -44,6 +42,8 @@ if __name__ == '__main__':
 
     print('> Loading cogs...')
     for cog in cogs:
+        cog = 'santabot.cogs.{0}'.format(cog)
+
         # TODO: Error handling when loading cogs
         santa.load_extension(cog)
         print('> Loaded cog ', cog)
