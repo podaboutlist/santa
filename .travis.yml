@@ -10,3 +10,4 @@ before_install:
 script:
   - pycodestyle --verbose --show-source --show-pep8 --statistics .
   - find . -name '*.py' | xargs darglint --verbosity 2 --docstring-style google --indentation 4 --log-level INFO
+  - python santabot/db/test_db.py
