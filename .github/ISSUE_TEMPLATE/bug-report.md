@@ -1,3 +1,12 @@
+---
+name: Bug Report
+about: Report an issue with the Bot or its related functionality
+title: ''
+labels: bug
+assignees: ''
+
+---
+
 <!--
     Hello! Thank you notifying us of an issue. Please fill out the
     sections below, making sure to follow the instructions you see in these
