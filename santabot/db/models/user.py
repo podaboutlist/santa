@@ -39,7 +39,7 @@ class User(db.Entity):
         "Ready for presents" if self.last_gift_datetime < datetime.now() - \
             timedelta(hours=1) else "Santa needs a break from yo needy ass"
 
-    @orm.db_session()
+    @orm.db_session
     def steal_presents(self):
         # Import statement placed here to avoid circular imports
         from .present import Present
@@ -51,3 +51,43 @@ class User(db.Entity):
         for present in presents:
             present.stolen = True
             present.date_stolen = datetime.now()
+
+            self.stolen_present_count += 1
+
+        self.owned_present_count = 0
+        self.grinch_visit_count += 1
+
+    @orm.db_session
+    def increment_owned_presents(self, amount=1):
+        self.owned_present_count += amount
+
+    @orm.db_session
+    def increment_gifted_presents(self, amount=1):
+        self.gifted_present_count += amount
+
+    @orm.db_session
+    def calculate_owned_presents(self, update_cache=True) -> int:
+        # FIXME: Find a way to refactor out this import line at the top
+        #        of every function that accesses another model
+        from .present import Present
+
+        # TODO: Fin a way to simply count elements rather than loading them
+        #       all into a list and running len()
+        presents = Present.select(
+            lambda p: (p.owner.id == self.id and p.stolen is False)
+        )
+
+        pc = len(presents)
+
+        if update_owned:
+            self.owned_present_count = pc
+
+        return pc
+
+    @orm.db_session
+    def calculate_stolen(self, update_cache=True) -> int:
+        pass
+
+    @orm.db_session
+    def list_presents(self, *args, count=10):
+        pass

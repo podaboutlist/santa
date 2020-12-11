@@ -20,7 +20,8 @@ import typing
 from discord.ext import commands
 from pony import orm
 from random import randint
-from ..db.models import Present, User
+from ..db.models import Present, Server, User
+from ..grinch_manager import GrinchManager
 
 
 class Give(commands.Cog):
@@ -36,8 +37,13 @@ class Give(commands.Cog):
 
     # @orm.db_session()
     @commands.command()
-    async def give(self, ctx,
-                   recipient: typing.Union[discord.Member, str], *args):
+    async def give(
+        self,
+        ctx: discord.ext.commands.Context,
+        recipient: typing.Union[discord.Member, str],
+        *,
+        present_name: str
+    ):
         """Command to request a present for oneself or another User
 
         Args:
@@ -46,51 +52,56 @@ class Give(commands.Cog):
                 of the present (a Member), or the first word of the Present.
             *args: Words describing the Present.
         """
-        with orm.db_session:
-            await ctx.channel.trigger_typing()
-
+        is_grinch_visit = False
+        if not isinstance(recipient, discord.Member):
             # FIXME: I just hardcoded chance to 50% for testing. Need to
             #        implement a better system (see docs/DESIGN.md).
             is_grinch_visit = bool(randint(0, 1))
-            # is_grinch_visit = True
-            # TODO: Filter naughty present names (i.e. slurs)?
-            present_name = " ".join(args)
 
-            # HACK: It appears PonyORM hasn't implemented select_or_create()
+        if not is_grinch_visit:
+            await ctx.trigger_typing()
 
+        with orm.db_session:
             user = User.get(id=ctx.author.id) or User(id=ctx.author.id)
-            giftee = None
+            server = Server.get(id=ctx.guild.id)
 
-            # We always create a new Present entry for simplicity's sake
+            if (not server) or (not server.webhook_url):
+                await ctx.send(
+                    '(error) No Webhook found for this server.\n'
+                    'Please ask an admin to use `@santa grinch summon`.'
+                )
+                return
+
+            giftee = None
             present = None
 
             if isinstance(recipient, discord.Member):
-                is_grinch_visit = False
-
-                # HACK: It appears PonyORM hasn't implemented
-                #       select_or_create()
-                with orm.db_session:
-                    giftee = User.get(id=recipient.id) or User(id=recipient.id)
-
-                    present = Present(
-                        name=present_name,
-                        owner=giftee,
-                        gifter=user
-                    )
+                giftee = User.get(id=recipient.id) or User(id=recipient.id)
+                present = Present(
+                    name=present_name,
+                    owner=giftee,
+                    gifter=user
+                )
+                giftee.increment_owned_presents()
+                user.increment_gifted_presents()
             else:
-                with orm.db_session:
-                    present = Present(
-                        name=present_name,
-                        owner=user
-                    )
+                present = Present(
+                    name=present_name,
+                    owner=user
+                )
+                user.increment_owned_presents()
 
             if is_grinch_visit:
-                # TODO: Send this message through the Grinch webhook.
-                #       Might have to refactor how GrinchManager works so we
-                #       can initialize a Grinch instance with just Server.id
-                await ctx.send(
-                    'That green bastard, The Grinch, stole all your presents!'
+                grinch = GrinchManager(server.webhook_url)
+                grinch.send_message(
+                    # FIXME: Change statement to singular if only 1 present.
+                    'Heh heh heh... I just stole {0} presents from you, {1}!\n'
+                    .format(user.owned_present_count, ctx.author.mention),
+                    # FIXME: Don't hardcode these images?
+                    # TODO: Make some custom imagery for the repo.
+                    'https://i.imgur.com/iqEeKrF.jpg'
                 )
+
                 user.steal_presents()
                 return
 
@@ -106,13 +117,18 @@ class Give(commands.Cog):
             else:
                 await ctx.send(
                     'Ho ho ho! Check under your tree for {0}!'
-                    .format(" ".join(args))
+                    .format(present_name)
                 )
 
     @commands.command()
-    async def please(self, ctx, _,
-                     recipient: typing.Union[discord.Member, str],
-                     *args):
+    async def please(
+        self,
+        ctx: discord.ext.commands.Context,
+        _: str,
+        recipient: typing.Union[discord.Member, str],
+        *,
+        args: str
+    ):
         """Command for pleasantly asking for a present.
 
         Args:
@@ -124,7 +140,7 @@ class Give(commands.Cog):
         """
         await ctx.channel.trigger_typing()
 
-        await self.give(ctx, recipient, *args)
+        await self.give(ctx, recipient, args)
         await ctx.send('Thank you for saying please!')
 
 
