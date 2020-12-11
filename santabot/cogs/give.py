@@ -48,9 +48,9 @@ class Give(commands.Cog):
 
         Args:
             ctx (discord.ext.commands.Context): Discord.py command context.
-            recipient (typing.Union[discord.Member, str]): Either the recipient
+            recipient (discord.Member or str): Either the recipient
                 of the present (a Member), or the first word of the Present.
-            *args: Words describing the Present.
+            present_name (str): The details of the present.
         """
         is_grinch_visit = False
         if not isinstance(recipient, discord.Member):
@@ -133,10 +133,10 @@ class Give(commands.Cog):
 
         Args:
             ctx (discord.ext.commands.Context): Discord.py command context.
-            _ ([type]): The `give` prefix. Not used.
-            recipient (typing.Union[discord.Member, str]): Either the recipient
-                of the present (a Member), or the first word of the Present.
-            *args: Words describing the Present.
+            _ (str): The `give` prefix. Not used.
+            recipient (discord.Member or str]): Either the recipient of the
+                present (a Member), or the first word of the Present.
+            args (str): The details of the present.
         """
         await ctx.channel.trigger_typing()
 
