@@ -38,3 +38,16 @@ class User(db.Entity):
         self.last_gift_received_datetime,
         "Ready for presents" if self.last_gift_datetime < datetime.now() - \
             timedelta(hours=1) else "Santa needs a break from yo needy ass"
+
+    @orm.db_session()
+    def steal_presents(self):
+        # Import statement placed here to avoid circular imports
+        from .present import Present
+
+        presents = Present.select(
+            lambda p: (p.owner.id == self.id and p.stolen is False)
+        )
+
+        for present in presents:
+            present.stolen = True
+            present.date_stolen = datetime.now()

@@ -1,4 +1,5 @@
 import discord
+from os import getenv
 from typing import Union
 
 
@@ -7,8 +8,8 @@ class GrinchManager():
     """
     def __init__(self,
                  webhook: Union[discord.Webhook, str],
-                 name: str,
-                 avatar_url: str):
+                 name=getenv('WEBHOOK_NAME'),
+                 avatar_url=getenv('WEBHOOK_NAME')):
         """Wrapper class for webhook logic that powers the Grinch's messages.
 
         Args:

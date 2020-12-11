@@ -1,6 +1,5 @@
 .vscode
-config/config.json
-
+*.db
 
 ### GitHub standard Python .gitignore
 # Byte-compiled / optimized / DLL files
