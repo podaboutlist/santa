@@ -42,12 +42,13 @@ if __name__ == '__main__':
     print('> Starting Santa Bot...')
 
     bot_token = getenv('BOT_TOKEN')
-    db_debug = bool(getenv('DB_DEBUG', default=False))
+    use_sqlite = bool(getenv('USE_SQLITE', default=True))
 
     print('> Initialising database connection...')
-    if db_debug:
+    if use_sqlite:
         print('> Using SQLite DB in memory for testing.')
-        santa.db.bind(provider='sqlite', filename='sqlite.db', create_db=True)
+        santa.db.bind(provider='sqlite',
+                      filename='santabot.db', create_db=True)
 
         print('> Generating database mapping...')
         santa.db.generate_mapping(create_tables=True)

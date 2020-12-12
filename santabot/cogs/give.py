@@ -27,15 +27,11 @@ from ..grinch_manager import GrinchManager
 class Give(commands.Cog):
     """Parent class for commands that request presents.
     """
+
     def __init__(self, bot):
         self.bot = bot
+        self.please = False
 
-    # FIXME: If both of these decorators are present, things don't work. If
-    #        db_session() is added first, Discord.py doesn't register the
-    #        command. If db_session() is added second, we get
-    #        TypeError('Callback must be a coroutine.')
-
-    # @orm.db_session()
     @commands.command()
     async def give(
         self,
@@ -48,86 +44,21 @@ class Give(commands.Cog):
 
         Args:
             ctx (discord.ext.commands.Context): Discord.py command context.
-            recipient (discord.Member or str): Either the recipient
-                of the present (a Member), or the first word of the Present.
-            present_name (str): The details of the present.
+            recipient (discord.Member or str): Either a User @mention or a
+                word like 'me'.
+            present_name (str): The name of the present.
         """
-        is_grinch_visit = False
-        if not isinstance(recipient, discord.Member):
-            # FIXME: I just hardcoded chance to 50% for testing. Need to
-            #        implement a better system (see docs/DESIGN.md).
-            is_grinch_visit = bool(randint(0, 1))
-
-        if not is_grinch_visit:
-            await ctx.trigger_typing()
-
         with orm.db_session:
-            user = User.get(id=ctx.author.id) or User(id=ctx.author.id)
-            server = Server.get(id=ctx.guild.id)
-
-            if (not server) or (not server.webhook_url):
-                await ctx.send(
-                    '(error) No Webhook found for this server.\n'
-                    'Please ask an admin to use `@santa grinch summon`.'
-                )
-                return
-
-            giftee = None
-            present = None
-
-            if isinstance(recipient, discord.Member):
-                giftee = User.get(id=recipient.id) or User(id=recipient.id)
-                present = Present(
-                    name=present_name,
-                    owner=giftee,
-                    gifter=user
-                )
-                giftee.increment_owned_presents()
-                user.increment_gifted_presents()
-            else:
-                present = Present(
-                    name=present_name,
-                    owner=user
-                )
-                user.increment_owned_presents()
-
-            if is_grinch_visit:
-                grinch = GrinchManager(server.webhook_url)
-                grinch.send_message(
-                    # FIXME: Change statement to singular if only 1 present.
-                    'Heh heh heh... I just stole {0} presents from you, {1}!\n'
-                    .format(user.owned_present_count, ctx.author.mention),
-                    # FIXME: Don't hardcode these images?
-                    # TODO: Make some custom imagery for the repo.
-                    'https://i.imgur.com/iqEeKrF.jpg'
-                )
-
-                user.steal_presents()
-                return
-
-            if giftee:
-                await ctx.send(
-                    'Ho ho ho {0}, check under your tree for {1} from {2}!'
-                    .format(
-                        recipient.mention,
-                        present_name,
-                        ctx.author.mention
-                    )
-                )
-            else:
-                await ctx.send(
-                    'Ho ho ho! Check under your tree for {0}!'
-                    .format(present_name)
-                )
+            await self.__do_gifting(ctx, recipient, present_name)
 
     @commands.command()
     async def please(
         self,
         ctx: discord.ext.commands.Context,
-        _: str,
-        recipient: typing.Union[discord.Member, str],
+        _: str,  # give
+        recipient: typing.Union[discord.Member, str],  # @user or 'me'
         *,
-        args: str
+        present_name: str
     ):
         """Command for pleasantly asking for a present.
 
@@ -136,12 +67,140 @@ class Give(commands.Cog):
             _ (str): The `give` prefix. Not used.
             recipient (discord.Member or str]): Either the recipient of the
                 present (a Member), or the first word of the Present.
-            args (str): The details of the present.
+            present_name (str): The name of the present.
         """
-        await ctx.channel.trigger_typing()
+        with orm.db_session:
+            await self.__do_gifting(ctx, recipient, present_name, please=True)
 
-        await self.give(ctx, recipient, args)
-        await ctx.send('Thank you for saying please!')
+    async def __do_gifting(
+        self,
+        ctx: discord.ext.commands.Context,
+        recipient: typing.Union[discord.Member, str],
+        present_name: str,
+        *,
+        please=False
+    ):
+        """Underlying logic for `@santa give` and @santa please give`
+
+        Args:
+            ctx (discord.ext.commands.Context): [description]
+            recipient (typing.Union[discord.Member, str]): [description]
+            present_name (str): [description]
+            please (bool, optional): [description]. Defaults to False.
+        """
+        # TODO: Make sure invoking_user isn't on cooldown from sending gifts.
+        invoking_user = self.bot.db.get_or_create(User, id=ctx.author.id)
+        # Are we giving another user a present?
+        user_to_user = isinstance(recipient, discord.Member)
+        server = Server.get(id=ctx.guild.id)
+        grinch = None
+        grinch_visit = False
+
+        if (not server) or (not server.is_configured()):
+            await ctx.send(
+                '(error) No Webhook found for this server.\n'
+                'Please ask an admin to use `@santa grinch summon`.'
+            )
+            return
+        elif ctx.channel.id != server.channel_id:
+            # Don't do anything if we're not in the same channel as
+            # the Webhook
+            return
+        else:
+            grinch = GrinchManager(server.webhook_url)
+
+        # Let the User know we're doing something if this takes a while
+        await ctx.trigger_typing()
+
+        if user_to_user:
+            # Send a present. 0% chance of the Grinch showing up.
+            self.__send_present(invoking_user, recipient, present_name, please)
+
+            await ctx.send(
+                'Ho ho ho {0}, check under your tree for {1} from {2}!'
+                .format(recipient.mention, present_name, ctx.author.mention)
+            )
+
+            # Our gifting work here is done (no Grinch for sent gifts)
+            return
+
+        tmp_present_count = invoking_user.owned_present_count
+
+        # Give the User a present and check to see if the Grinch showed up.
+        if self.__give_present(invoking_user, present_name, please=please):
+            # FIXME: Change statement to singular if only 1 present.
+            # FIXME: Don't hardcode attached images?
+            # TODO:  Make some custom artwork for these messages.
+            grinch.send_message(
+                'Heh heh heh... I just stole **{0}** presents from you, {1}!\n'
+                .format(tmp_present_count, ctx.author.mention),
+                'That makes it **{0}** presents stolen from you so far!\n'
+                .format(invoking_user.stolen_present_count),
+                'https://i.imgur.com/iqEeKrF.jpg'
+            )
+
+            await ctx.send('Ah god damn it. He did it again.')
+            return
+
+        # Santa gave us our Present and we avoided the Grinch!
+        await ctx.send(
+            'Ho ho ho {0}! Check under your tree for {1}!'
+            .format(ctx.author.mention, present_name)
+        )
+
+    def __give_present(
+        self,
+        invoking_user: discord.Member,
+        present_name: str,
+        *,
+        please=False
+    ) -> bool:
+        """Give a present to a user who asked for one, then try to steal it.
+
+        Args:
+            invoking_user (discord.Member): Who asked for the present
+            present_name (str): The name of the present
+            please (bool, optional): Did they say please? Defaults to False.
+
+        Returns:
+            bool: Whether the Grinch stole their presents.
+        """
+        present = Present(
+            name=present_name,
+            owner=invoking_user,
+            please=please
+        )
+
+        invoking_user.increment_owned_presents()
+
+        return invoking_user.try_steal_presents()
+
+    def __send_present(
+        self,
+        invoking_user: discord.Member,
+        recipient: discord.Member,
+        present_name: str,
+        please=False
+    ):
+        """One user sends a present to another.
+
+        Args:
+            invoking_user (discord.Member): Who sent the gift.
+            recipient (discord.Member): Who the gift is for.
+            present_name (str): The name of the gift.
+            please (bool, optional): The magic word. Defaults to False.
+        """
+        recipient = self.bot.db.get_or_create(User, id=recipient.id)
+
+        present = Present(
+            name=present_name,
+            owner=recipient,
+            gifter=invoking_user,
+            please=please
+        )
+
+        recipient.increment_owned_presents()
+        invoking_user.increment_gifted_presents()
 
 
 def setup(bot):

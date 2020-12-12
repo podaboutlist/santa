@@ -67,10 +67,10 @@ class GrinchCommands(commands.Cog):
         """
         # Check if this server is already registered in the DB
         with orm.db_session:
-            server = Server.get(id=ctx.guild.id) or Server(id=ctx.guild.id)
+            server = self.bot.db.get_or_create(Server, id=ctx.guild.id)
             new_webhook = None
 
-            if server.webhook_url:
+            if server.is_configured():
                 self.grinch = GrinchManager(server.webhook_url)
                 self.grinch.send_message('You already summoned me here >:)')
                 return
@@ -92,7 +92,11 @@ class GrinchCommands(commands.Cog):
                 )
                 return
 
-            server.webhook_url = new_webhook.url
+            server.add_webhook(
+                channel_id=ctx.channel.id,
+                webhook_url=new_webhook.url
+            )
+
             self.grinch = GrinchManager(new_webhook.url)
 
             # End of orm.db_session context
@@ -126,14 +130,16 @@ class GrinchCommands(commands.Cog):
         with orm.db_session:
             server = Server.get(id=ctx.guild.id)
 
-            if (not server) or (not server.webhook_url):
+            if (not server) or (not server.is_configured()):
                 await ctx.send(
                     "(error) This server doesn't have an associated Webhook."
                 )
                 return
 
-            # Strings get set to '' instead of None
-            server.set(webhook_url='')
+            # Remove Wenook information from the DB
+            server.remove_webhook()
+
+            # End of orm.db_session context
 
         # Remove the Webhook from the Discord Guild
         try:
