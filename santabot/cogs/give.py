@@ -113,34 +113,64 @@ class Give(commands.Cog):
         await ctx.trigger_typing()
 
         if user_to_user:
-            # Send a present. 0% chance of the Grinch showing up.
-            self.__send_present(invoking_user, recipient, present_name, please)
+            if invoking_user.check_send_timer():   
+                # Send a present. 0% chance of the Grinch showing up.
+                self.__send_present(invoking_user, recipient, present_name, please)
 
-            await ctx.send(
-                'Ho ho ho {0}, check under your tree for {1} from {2}!'
-                .format(recipient.mention, present_name, ctx.author.mention)
-            )
+                await ctx.send(
+                    'Ho ho ho {0}, check under your tree for {1} from {2}!'
+                    .format(recipient.mention, present_name, ctx.author.mention)
+                )
 
-            # Our gifting work here is done (no Grinch for sent gifts)
-            return
+                # Our gifting work here is done (no Grinch for sent gifts)
+                return
 
-        tmp_present_count = invoking_user.owned_present_count
+            else:
+                await ctx.send(
+                    "I'm sorry {0}, but you'll need to wait a little while "
+                    "before sending another gift."
+                    .format(ctx.author.mention)
+                )
 
-        # Give the User a present and check to see if the Grinch showed up.
-        if self.__give_present(invoking_user, present_name, please=please):
-            # FIXME: Change statement to singular if only 1 present.
-            # FIXME: Don't hardcode attached images?
-            # TODO:  Make some custom artwork for these messages.
-            grinch.send_message(
-                'Heh heh heh... I just stole **{0}** presents from you, {1}!\n'
-                .format(tmp_present_count, ctx.author.mention),
-                'That makes it **{0}** presents stolen from you so far!\n'
-                .format(invoking_user.stolen_present_count),
-                'https://i.imgur.com/iqEeKrF.jpg'
-            )
+                return
 
-            await ctx.send('Ah god damn it. He did it again.')
-            return
+        if invoking_user.check_receive_timer():
+            tmp_present_count = invoking_user.owned_present_count
+
+            # Give the User a present and check to see if the Grinch showed up.
+            if self.__give_present(invoking_user, present_name, please=please):
+                # FIXME: Change statement to singular if only 1 present.
+                # FIXME: Don't hardcode attached images?
+                # TODO:  Make some custom artwork for these messages.
+                grinch.send_message(
+                    'Heh heh heh... I just stole **{0}** {1} from you, {2}!\n'
+                    .format(tmp_present_count, 
+                            "present" if tmp_present_count == 1 else "presents", 
+                            ctx.author.mention),
+                    'That makes it **{0}** {1} stolen from you so far!\n'
+                    .format(invoking_user.stolen_present_count, 
+                            "present" if invoking_user.stolen_present_count == 1 else "presents"),
+                    'https://i.imgur.com/iqEeKrF.jpg'
+                )
+
+                await ctx.send('Ah god damn it. He did it again.')
+                return
+
+        else:
+            if please:
+                await ctx.send('Santa is busy delivering presents to the child soldiers of Uganda!'
+                        'Please try again in **{0}** minutes.')
+                        .format(invoking_user.get_receive_time_remaining())
+                        
+                return
+            else:
+                await ctx.send('https://i.imgur.com/0oh6ZML.png'
+                    '**Your avarice has angered Santa.**' 
+                    '**You have been placed on the naughty list for the next {0} minutes**\n'
+                    .format(int(getenv('WAIT_MINUTES')))
+                )
+
+                return
 
         # Santa gave us our Present and we avoided the Grinch!
         await ctx.send(
@@ -172,6 +202,7 @@ class Give(commands.Cog):
         )
 
         invoking_user.increment_owned_presents()
+        invoking_user.reset_receive_timer()
 
         return invoking_user.try_steal_presents()
 
@@ -201,6 +232,7 @@ class Give(commands.Cog):
 
         recipient.increment_owned_presents()
         invoking_user.increment_gifted_presents()
+        invoking_user.reset_send_timer()
 
 
 def setup(bot):
