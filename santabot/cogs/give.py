@@ -113,9 +113,10 @@ class Give(commands.Cog):
         await ctx.trigger_typing()
 
         if user_to_user:
-            if invoking_user.check_send_timer():   
+            if invoking_user.check_send_timer():
                 # Send a present. 0% chance of the Grinch showing up.
-                self.__send_present(invoking_user, recipient, present_name, please)
+                self.__send_present(
+                    invoking_user, recipient, present_name, please)
 
                 await ctx.send(
                     'Ho ho ho {0}, check under your tree for {1} from {2}!'
@@ -144,11 +145,11 @@ class Give(commands.Cog):
                 # TODO:  Make some custom artwork for these messages.
                 grinch.send_message(
                     'Heh heh heh... I just stole **{0}** {1} from you, {2}!\n'
-                    .format(tmp_present_count, 
-                            "present" if tmp_present_count == 1 else "presents", 
+                    .format(tmp_present_count,
+                            "present" if tmp_present_count == 1 else "presents",
                             ctx.author.mention),
                     'That makes it **{0}** {1} stolen from you so far!\n'
-                    .format(invoking_user.stolen_present_count, 
+                    .format(invoking_user.stolen_present_count,
                             "present" if invoking_user.stolen_present_count == 1 else "presents"),
                     'https://i.imgur.com/iqEeKrF.jpg'
                 )
@@ -158,17 +159,18 @@ class Give(commands.Cog):
 
         else:
             if please:
-                await ctx.send('Santa is busy delivering presents to the child soldiers of Uganda!'
-                        'Please try again in **{0}** minutes.')
-                        .format(invoking_user.get_receive_time_remaining())
-                        
+                await ctx.send('Santa is busy delivering presents to the child soldiers of Uganda!\n'
+                               'Please try again in **{0}** minutes.')
+                .format(invoking_user.get_receive_time_remaining())
+
                 return
             else:
                 await ctx.send('https://i.imgur.com/0oh6ZML.png'
-                    '**Your avarice has angered Santa.**' 
-                    '**You have been placed on the naughty list for the next {0} minutes**\n'
-                    .format(int(getenv('WAIT_MINUTES')))
-                )
+                               '**Your avarice has angered Santa.\n**'
+                               '**You have been placed on the naughty list for the next {0} minutes**'
+                               .format(int(getenv('WAIT_MINUTES')))
+                               )
+                invoking_user.reset_receive_timer()
 
                 return
 
