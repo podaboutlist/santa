@@ -12,6 +12,7 @@ def get_or_create(entity: EntityMeta, **kwargs) -> EntityMeta:
 
     Args:
         entity (EntityMeta): Any class which derives from orm.Entity
+        kwargs: Entity data, passed to the parent class.
 
     Returns:
         EntityMeta: A fetched or created instance of the Entity.

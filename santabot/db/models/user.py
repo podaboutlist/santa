@@ -77,6 +77,9 @@ class User(db.Entity):
 
                rand(0, present_count) > cube_root(present_count) * please_bonus
 
+        Args:
+            please (bool, optional): [description]. Defaults to False.
+
         Returns:
             bool: Whether presents were stolen or not.
         """
