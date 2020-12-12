@@ -173,9 +173,14 @@ class User(db.Entity):
             return False
 
     @orm.db_session
-    def reset_recieve_timer(self):
-        self.last_gift_recieve_datetime = datetime.now()
+    def reset_receive_timer(self):
+        self.last_gift_receive_datetime = datetime.now()
 
     @orm.db_session
     def reset_send_timer(self):
         self.last_gift_sent_datetime = datetime.now()
+
+    @orm.db_session
+    def get_receive_time_remaining(self):
+        remaining = self.last_gift_receive_datetime - datetime.now()
+        return remaining.minutes + 1
