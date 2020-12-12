@@ -13,3 +13,14 @@ class Present(db.Entity):
     please = orm.Required(bool, default=False)
     date_received = orm.Required(datetime, default=datetime.now())
     date_stolen = orm.Optional(datetime)
+
+
+
+    @orm.db_session
+    def calculate_global_presents(self) -> int:
+        return db.count(p for p in Present)
+
+
+    @orm.db_session
+    def calculate_global_steals(self) -> int:
+        return db.count(p for p in Present and p.stolen)
