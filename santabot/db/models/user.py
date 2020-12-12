@@ -89,7 +89,7 @@ class User(db.Entity):
             return False
 
         random_int = randint(0, present_count)
-        threshold = present_count ** (1/3)  # cube root
+        threshold = present_count ** (1 / 3)  # cube root
 
         # Being nice gets you places. Here, it gets you a slightly better
         # chance of not getting your presents swiped.
@@ -155,3 +155,27 @@ class User(db.Entity):
         ).order_by(
             lambda p: desc(p.date_received)
         ).page(page)
+
+    @orm.db_session
+    def check_receive_timer(self):
+        if datetime.now() - timedelta(minutes=int(getenv('WAIT_MINUTES'))
+                                      ) >= self.last_gift_received_datetime:
+            return True
+        else:
+            return False
+
+    @orm.db_session
+    def check_send_timer(self):
+        if datetime.now() - timedelta(minutes=int(getenv('WAIT_MINUTES'))
+                                      ) >= self.last_gift_sent_datetime:
+            return True
+        else:
+            return False
+
+    @orm.db_session
+    def reset_recieve_timer(self):
+        self.last_gift_recieve_datetime = datetime.now()
+
+    @orm.db_session
+    def reset_send_timer(self):
+        self.last_gift_sent_datetime = datetime.now()
