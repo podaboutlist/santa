@@ -159,17 +159,19 @@ class Give(commands.Cog):
 
         else:
             if please:
-                await ctx.send('Santa is busy delivering presents to the child soldiers of Uganda!\n'
-                               'Please try again in **{0}** minutes.')
+                await ctx.send('Santa is busy delivering presents '
+                                'to the child soldiers of Uganda!\n'
+                                'Please try again in **{0}** minutes.')
                 .format(invoking_user.get_receive_time_remaining())
 
                 return
             else:
                 await ctx.send('https://i.imgur.com/0oh6ZML.png'
-                               '**Your avarice has angered Santa.\n**'
-                               '**You have been placed on the naughty list for the next {0} minutes**'
-                               .format(int(getenv('WAIT_MINUTES')))
-                               )
+                        '**Your avarice has angered Santa.\n**'
+                        '**You have been placed on the naughty list '
+                        'for the next {0} minutes**'
+                        .format(int(getenv('WAIT_MINUTES')))
+                                )
                 invoking_user.reset_receive_timer()
 
                 return
