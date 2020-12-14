@@ -77,12 +77,13 @@ class User(db.Entity):
         # return False
 
         random_int = randint(0, present_count)
-        threshold = present_count ** (1 / 3)  # cube root
+        threshold = ((40 * present_count) ** (1 / 2)) + 10  # sqrt(40x) + 10
+        threshold = int(threshold)  # Cast to integer, round down
 
         # Being nice gets you places. Here, it gets you a slightly better
         # chance of not getting your presents swiped.
         if please:
-            threshold = threshold * float(getenv('SAID_PLEASE_BONUS'))
+            threshold = int(threshold * float(getenv('SAID_PLEASE_BONUS')))
 
         if random_int > int(threshold):
             self.__steal_presents()
