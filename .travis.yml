@@ -5,9 +5,16 @@ python:
   - "3.7"
   - "3.8"
   - "3.9"
+services:
+  - docker
 before_install:
   - pip install darglint pycodestyle
 script:
+  # PEP8 Linting
   - pycodestyle --verbose --show-source --show-pep8 --statistics .
+  # Docstring linting
   - find . -name '*.py' | xargs darglint --verbosity 2 --docstring-style google --indentation 4 --log-level INFO
+  # DB Testing
   - python santabot/db/test_db.py
+  # Build image
+  - docker build -t ralphorama/santabot .
