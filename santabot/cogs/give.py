@@ -20,6 +20,7 @@ import typing
 from discord.ext import commands
 from pony import orm
 from random import randint
+from math import ceil
 from ..db.models import Present, Server, User
 from ..grinch_manager import GrinchManager
 
@@ -97,7 +98,6 @@ class Give(commands.Cog):
             present_name (str): [description]
             please (bool, optional): [description]. Defaults to False.
         """
-        # TODO: Make sure invoking_user isn't on cooldown from sending gifts.
         invoking_user = self.bot.db.get_or_create(User, id=ctx.author.id)
         server = Server.get(id=ctx.guild.id)
         grinch = None
@@ -121,7 +121,7 @@ class Give(commands.Cog):
 
         # Send a present from one User to another
         if isinstance(recipient, discord.Member):
-            cooldown = invoking_user.check_cooldown(sending=True)
+            cooldown = invoking_user.check_cooldown(sending_gift=True)
             if cooldown:
                 delay = self.__to_minutes(cooldown)
 
@@ -221,7 +221,6 @@ class Give(commands.Cog):
         )
 
         invoking_user.increment_owned_presents()
-        invoking_user.reset_receive_timer()
 
         return invoking_user.try_steal_presents()
 
@@ -254,21 +253,20 @@ class Give(commands.Cog):
 
         recipient.increment_owned_presents()
         invoking_user.increment_gifted_presents()
-        invoking_user.reset_send_timer()
 
     # -------------------------------------------------------------------------
     # __to_minutes() is just `math.ciel()`` with no `import math`
     # -------------------------------------------------------------------------
-    def __to_minutes(self, seconds: float) -> int:
+    def __to_minutes(self, td) -> int:
         """Hack to round up int conversion without importing math.ceil
 
         Args:
-            seconds (float): Number of seconds to convert
+            td (datetime.timedelta): The timedelta remaining
 
         Returns:
             int: The number of minutes (rounded up)
         """
-        return int(seconds / 60) + (seconds % 60 > 0)
+        return int(ceil(td.total_seconds() / 60))
 
 
 def setup(bot):

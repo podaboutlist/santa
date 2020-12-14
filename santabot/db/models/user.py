@@ -1,7 +1,7 @@
+from datetime import datetime, timedelta
 from os import getenv
 from pony import orm
 from random import randint
-from time import time
 from ._base import db
 
 
@@ -42,12 +42,15 @@ class User(db.Entity):
         from .present import Present
 
         presents = Present.select(
-            lambda p: (p.owner.id == self.id and p.stolen is False)
+            lambda p: (p.owner.id == self.id) and (p.stolen is False)
         )
 
+        if not presents:
+            return
+
         for present in presents:
-            present.steal()
-            self.stolen_present_count += 1
+            if present.steal():
+                self.stolen_present_count += 1
 
         if self.owned_present_count > self.max_present_count:
             self.max_present_count = self.owned_present_count
@@ -70,8 +73,8 @@ class User(db.Entity):
         """
         present_count = self.owned_present_count
 
-        if present_count < int(getenv('GRINCH_STEAL_THRESHOLD')):
-            return False
+        # if present_count < int(getenv('GRINCH_STEAL_THRESHOLD')):
+        # return False
 
         random_int = randint(0, present_count)
         threshold = present_count ** (1 / 3)  # cube root
@@ -82,7 +85,7 @@ class User(db.Entity):
             threshold = threshold * float(getenv('SAID_PLEASE_BONUS'))
 
         if random_int > int(threshold):
-            self.steal_presents()
+            self.__steal_presents()
             return True
 
         return False
@@ -111,9 +114,9 @@ class User(db.Entity):
         #        of every function that accesses another model
         from .present import Present
 
-        pc = db.count(
+        pc = Present.select(
             lambda p: p.owner.id == self.id and p.stolen is False
-        )
+        ).count()
 
         if update_cache:
             self.owned_present_count = pc
@@ -136,9 +139,9 @@ class User(db.Entity):
         #        of every function that accesses another model
         from .present import Present
 
-        sc = db.count(
-            p for p in Present if (p.owner.id == self.id) and p.stolen
-        )
+        sc = Present.select(
+            lambda p: p.owner.id == self.id and p.stolen
+        ).count()
 
         if update_cache:
             self.stolen_present_count = sc
@@ -152,7 +155,7 @@ class User(db.Entity):
         return Present.select(
             p for p in Present if p.owner.id == self.id
         ).order_by(
-            lambda p: desc(p.date_received)
+            orm.desc(Present.date_received)
         ).page(page)
 
     @orm.db_session
@@ -171,39 +174,54 @@ class User(db.Entity):
         """
         from .present import Present
 
-        return Present.select(
-            lambda p: p.id == self.id and
-            bool(p.gifter) == is_gift and
-            p.stolen == stolen
-        ).order_by(
-            desc(Present.date_received)
-        ).first()
+        presents = None
+
+        if is_gift:
+            presents = Present.select(
+                lambda p: p.gifter.id == self.id and
+                p.stolen == is_stolen
+            )
+        else:
+            presents = Present.select(
+                lambda p: p.owner.id == self.id and
+                p.stolen == is_stolen
+            )
+
+        return presents.order_by(orm.desc(Present.date_received)).first()
 
     @orm.db_session
-    def check_cooldown(self, *, sending=False) -> bool:
+    def check_cooldown(self, *, sending_gift=False) -> bool:
         """Check to see if this User is on a Present giving cooldown
 
         Args:
-            sending (bool, optional): Which cooldown to check, gift requesting
-                or gift sending. Defaults to False (requesting).
+            sending_gift (bool, optional): Which cooldown to check, gift
+                requesting or gift sending. Defaults to False (requesting).
 
         Returns:
             (bool|float): False if the User is not on cooldown, otherwise
                 the remaining seconds of the cooldown.
         """
-        now = time.localtime()
-        # Convert minutes to seconds for passing to time.localtime()
-        delay = getenv('WAIT_MINUTES') * 60
+        now = datetime.now()
+        delay = None
         last_gift = None
 
-        if sending:
-            last_gift = self.most_recent_present(is_gift=True).date_received
+        if sending_gift:
+            delay = timedelta(minutes=int(getenv('GIFT_SEND_DELAY_MINUTES')))
         else:
-            last_gift = self.most_recent_present().date_received
+            delay = timedelta(minutes=int(getenv('GIFT_ASK_DELAY_MINUTES')))
+
+        last_gift = self.most_recent_present(is_gift=sending_gift)
+
+        # If the user has no gifts
+        if not last_gift:
+            print('no last gift')
+            return False
+
+        last_gift = last_gift.date_received
 
         # Are we currently at a later time than the end of the cooldown?
-        if now > time.localtime(last_gift + delay):
+        if now > last_gift + delay:
             return False
         else:
-            # Return the number of seconds left in the cooldown
+            # Do some funky casting stuff to get a timedelta
             return (last_gift + delay) - now
