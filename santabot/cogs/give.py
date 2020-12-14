@@ -32,6 +32,9 @@ class Give(commands.Cog):
         self.bot = bot
         self.please = False
 
+    # -------------------------------------------------------------------------
+    # Discord.py `give` command
+    # -------------------------------------------------------------------------
     @commands.command()
     async def give(
         self,
@@ -51,6 +54,9 @@ class Give(commands.Cog):
         with orm.db_session:
             await self.__do_gifting(ctx, recipient, present_name)
 
+    # -------------------------------------------------------------------------
+    # Discord.py `please` prefix for `give` command
+    # -------------------------------------------------------------------------
     @commands.command()
     async def please(
         self,
@@ -72,6 +78,9 @@ class Give(commands.Cog):
         with orm.db_session:
             await self.__do_gifting(ctx, recipient, present_name, please=True)
 
+    # -------------------------------------------------------------------------
+    # __do_gifting() handles the majority of the gift sending logic
+    # -------------------------------------------------------------------------
     async def __do_gifting(
         self,
         ctx: discord.ext.commands.Context,
@@ -90,8 +99,6 @@ class Give(commands.Cog):
         """
         # TODO: Make sure invoking_user isn't on cooldown from sending gifts.
         invoking_user = self.bot.db.get_or_create(User, id=ctx.author.id)
-        # Are we giving another user a present?
-        user_to_user = isinstance(recipient, discord.Member)
         server = Server.get(id=ctx.guild.id)
         grinch = None
         grinch_visit = False
@@ -112,76 +119,84 @@ class Give(commands.Cog):
         # Let the User know we're doing something if this takes a while
         await ctx.trigger_typing()
 
-        if user_to_user:
-            if invoking_user.check_send_timer():
-                # Send a present. 0% chance of the Grinch showing up.
-                self.__send_present(
-                    invoking_user, recipient, present_name, please)
+        # Send a present from one User to another
+        if isinstance(recipient, discord.Member):
+            cooldown = invoking_user.check_cooldown(sending=True)
+            if cooldown:
+                delay = self.__to_minutes(cooldown)
 
                 await ctx.send(
-                    'Ho ho ho {0}, check under your tree for {1} from {2}!'
-                    .format(recipient.mention, present_name, ctx.author.mention)
+                    "I'm sorry {0}, but you need to wait **{1}** minutes "
+                    "before you can send another gift."
+                    .format(ctx.author.mention, delay)
                 )
-
-                # Our gifting work here is done (no Grinch for sent gifts)
                 return
 
-            else:
-                await ctx.send(
-                    "I'm sorry {0}, but you'll need to wait a little while "
-                    "before sending another gift."
-                    .format(ctx.author.mention)
-                )
+            # Send a present. 0% chance of the Grinch showing up.
+            self.__send_present(
+                invoking_user, recipient, present_name, please)
 
-                return
+            await ctx.send(
+                'Ho ho ho {0}, check under your tree for {1} from {2}!'
+                .format(recipient.mention, present_name, ctx.author.mention)
+            )
 
-        if invoking_user.check_receive_timer():
-            tmp_present_count = invoking_user.owned_present_count
+            # Our gifting work here is done (no Grinch for sent gifts)
+            return
 
-            # Give the User a present and check to see if the Grinch showed up.
-            if self.__give_present(invoking_user, present_name, please=please):
-                # FIXME: Change statement to singular if only 1 present.
-                # FIXME: Don't hardcode attached images?
-                # TODO:  Make some custom artwork for these messages.
-                grinch.send_message(
-                    'Heh heh heh... I just stole **{0}** {1} from you, {2}!\n'
-                    .format(tmp_present_count,
-                            "present" if tmp_present_count == 1 else "presents",
-                            ctx.author.mention),
-                    'That makes it **{0}** {1} stolen from you so far!\n'
-                    .format(invoking_user.stolen_present_count,
-                            "present" if invoking_user.stolen_present_count == 1 else "presents"),
-                    'https://i.imgur.com/iqEeKrF.jpg'
-                )
+        # Send a present to the user who asked for one
+        cooldown = invoking_user.check_cooldown()
+        if cooldown:
+            delay = self.__to_minutes(cooldown)
+            minute_s = 'minutes' if delay != 1 else 'minute'
 
-                await ctx.send('Ah god damn it. He did it again.')
-                return
+            # No longer punishing the user with a cooldown reset if they
+            # don't say please.
+            await ctx.send(
+                "Sorry, {0}, but you gotta chill with the presents. You "
+                "gotta wait **{1} {2}** until I'll give you another hit."
+                .format(ctx.author.mention, delay, minute_s)
+            )
 
-        else:
-            if please:
-                await ctx.send('Santa is busy delivering presents '
-                                'to the child soldiers of Uganda!\n'
-                                'Please try again in **{0}** minutes.')
-                .format(invoking_user.get_receive_time_remaining())
+            return
 
-                return
-            else:
-                await ctx.send('https://i.imgur.com/0oh6ZML.png'
-                        '**Your avarice has angered Santa.\n**'
-                        '**You have been placed on the naughty list '
-                        'for the next {0} minutes**'
-                        .format(int(getenv('WAIT_MINUTES')))
-                                )
-                invoking_user.reset_receive_timer()
-
-                return
-
-        # Santa gave us our Present and we avoided the Grinch!
-        await ctx.send(
-            'Ho ho ho {0}! Check under your tree for {1}!'
-            .format(ctx.author.mention, present_name)
+        # Cache the user's present count because it might get reset by
+        # __give_present
+        tmp_present_count = invoking_user.owned_present_count
+        # Give the user the present and see if the Grinch steals their presents
+        stolen = self.__give_present(
+            invoking_user,
+            present_name,
+            please=please
         )
 
+        # Santa gave us our Present and we avoided the Grinch!
+        if not stolen:
+            await ctx.send(
+                'Ho ho ho {0}! Check under your tree for {1}!'
+                .format(ctx.author.mention, present_name)
+            )
+            return
+
+        # Gotta let the user know we stole their presents
+        just_stolen = '**{0}** {1}'.format(
+            tmp_present_count,
+            'present' if tmp_present_count == 1 else 'presents'
+        )
+
+        grinch.send_message(
+            'Heh heh heh... I just stole {0} from you, {1}!\n'
+            .format(just_stolen, ctx.author.mention),
+            'That makes it **{0}** so far!\n'
+            .format(invoking_user.stolen_present_count),
+            'https://i.imgur.com/iqEeKrF.jpg'
+        )
+
+        await ctx.send('Ah god damn it. He did it again.')
+
+    # -------------------------------------------------------------------------
+    # __give_present() handles the logic for a User who asked for a present
+    # -------------------------------------------------------------------------
     def __give_present(
         self,
         invoking_user: discord.Member,
@@ -210,6 +225,9 @@ class Give(commands.Cog):
 
         return invoking_user.try_steal_presents()
 
+    # -------------------------------------------------------------------------
+    # __send_present() handles the logic for sending gifts from User to User
+    # -------------------------------------------------------------------------
     def __send_present(
         self,
         invoking_user: discord.Member,
@@ -237,6 +255,20 @@ class Give(commands.Cog):
         recipient.increment_owned_presents()
         invoking_user.increment_gifted_presents()
         invoking_user.reset_send_timer()
+
+    # -------------------------------------------------------------------------
+    # __to_minutes() is just `math.ciel()`` with no `import math`
+    # -------------------------------------------------------------------------
+    def __to_minutes(self, seconds: float) -> int:
+        """Hack to round up int conversion without importing math.ceil
+
+        Args:
+            seconds (float): Number of seconds to convert
+
+        Returns:
+            int: The number of minutes (rounded up)
+        """
+        return int(seconds / 60) + (seconds % 60 > 0)
 
 
 def setup(bot):
