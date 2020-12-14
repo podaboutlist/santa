@@ -1,5 +1,6 @@
 .vscode
 *.db
+docker-compose.yml
 
 ### GitHub standard Python .gitignore
 # Byte-compiled / optimized / DLL files

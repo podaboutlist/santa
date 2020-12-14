@@ -1,0 +1,30 @@
+version: '3.9'
+services:
+  santabot:
+    build: .
+    environment:
+      BOT_TOKEN: ''
+      # This is my account ID (Ralph#0001). Change it lol.
+      BOT_OWNER_ID: 143123353249513472
+      WEBHOOK_NAME: The Grinch
+      WEBHOOK_AVATAR_URL: https://i.imgur.com/orRBRzi.png
+      GRINCH_STEAL_THRESHOLD: 15
+      SAID_PLEASE_BONUS: 1.5
+      GIFT_SEND_DELAY_MINUTES: 2
+      GIFT_ASK_DELAY_MINUTES: 5
+      USE_SQLITE: 'False'
+      DB_HOST: 127.0.0.1
+      DB_PORT: 5432
+      DB_NAME: santabot
+      DB_USER: santabot
+      # Not implemented yet
+      DB_TABLE_PREFIX: sb_
+  db:
+    image: postgres:13-alpine
+    restart: always
+    environment:
+      POSTGRES_USER: santabot
+      POSTGRES_PASSWORD: santabot
+      POSTGRES_DB: santabot
+    volumes:
+      - <your_path_here>:/var/lib/postgresql/data
