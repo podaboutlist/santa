@@ -1,7 +1,7 @@
 from os import getenv
 from pony import orm
-from datetime import datetime, timedelta
 from random import randint
+from time import time
 from ._base import db
 
 
@@ -24,15 +24,6 @@ class User(db.Entity):
     max_present_count = orm.Required(int, default=0, min=0)
     grinch_visit_count = orm.Required(int, default=0, min=0)
 
-    last_gift_sent_datetime = orm.Required(
-        datetime,
-        default=datetime(year=2001, month=9, day=11, hour=8, minute=46)
-    )
-    last_gift_received_datetime = orm.Required(
-        datetime,
-        default=datetime(year=2013, month=4, day=15, hour=2, minute=50)
-    )
-
     def get_stats(self):
         return
         self.owned_present_count,
@@ -40,11 +31,7 @@ class User(db.Entity):
         self.gifted_present_count,
         self.grinch_visit_count,
         self.gifted_presents,
-        self.owned_presents,
-        self.last_gift_sent_datetime,
-        self.last_gift_received_datetime,
-        "Ready for presents" if self.last_gift_datetime < datetime.now() - \
-            timedelta(hours=1) else "Santa needs a break from yo needy ass"
+        self.owned_presents
 
     @orm.db_session
     def __steal_presents(self):
@@ -59,9 +46,7 @@ class User(db.Entity):
         )
 
         for present in presents:
-            present.stolen = True
-            present.date_stolen = datetime.now()
-
+            present.steal()
             self.stolen_present_count += 1
 
         if self.owned_present_count > self.max_present_count:
@@ -112,19 +97,23 @@ class User(db.Entity):
 
     @orm.db_session
     def calculate_owned_presents(self, update_cache=True) -> int:
-        """Get
+        """Get a count of all presents in the database owned by this User
+           in the database.
 
         Args:
-            update_cache (bool, optional): [description]. Defaults to True.
+            update_cache (bool, optional): Whether to update
+                self.owned_present_count. Defaults to True.
 
         Returns:
-            int: [description]
+            int: The number of presents this User owns
         """
         # FIXME: Find a way to refactor out this import line at the top
         #        of every function that accesses another model
         from .present import Present
 
-        pc = db.count(p for p in Present if p.owner.id == self.id)
+        pc = db.count(
+            lambda p: p.owner.id == self.id and p.stolen is False
+        )
 
         if update_cache:
             self.owned_present_count = pc
@@ -133,6 +122,16 @@ class User(db.Entity):
 
     @orm.db_session
     def calculate_stolen_presents(self, update_cache=True) -> int:
+        """Iterate over this User's presents in the database and calculate how
+           many are marked as stolen.
+
+        Args:
+            update_cache (bool, optional): Whether to update
+                self.stolen_present_count. Defaults to True.
+
+        Returns:
+            int: The number of presents stolen from the User
+        """
         # FIXME: Find a way to refactor out this import line at the top
         #        of every function that accesses another model
         from .present import Present
@@ -150,37 +149,61 @@ class User(db.Entity):
     def list_presents(self, page=1):
         from .present import Present
 
-        Present.select(
+        return Present.select(
             p for p in Present if p.owner.id == self.id
         ).order_by(
             lambda p: desc(p.date_received)
         ).page(page)
 
     @orm.db_session
-    def check_receive_timer(self):
-        if datetime.now() - timedelta(minutes=int(getenv('WAIT_MINUTES'))
-                                      ) >= self.last_gift_received_datetime:
-            return True
+    def most_recent_present(self, *, is_gift=False, is_stolen=False):
+        """Get the most recent present the user received
+
+        Args:
+            is_gift (bool, optional): Filter gifts vs presents the User
+                asked for. Defaults to False.
+            is_stolen (bool, optional): Filter gifts based on their 'stolen'
+                status.
+
+        Returns:
+            Present: The most recent Present. Can be `None` if user has
+                no presents.
+        """
+        from .present import Present
+
+        return Present.select(
+            lambda p: p.id == self.id and
+            bool(p.gifter) == is_gift and
+            p.stolen == stolen
+        ).order_by(
+            desc(Present.date_received)
+        ).first()
+
+    @orm.db_session
+    def check_cooldown(self, *, sending=False) -> bool:
+        """Check to see if this User is on a Present giving cooldown
+
+        Args:
+            sending (bool, optional): Which cooldown to check, gift requesting
+                or gift sending. Defaults to False (requesting).
+
+        Returns:
+            (bool|float): False if the User is not on cooldown, otherwise
+                the remaining seconds of the cooldown.
+        """
+        now = time.localtime()
+        # Convert minutes to seconds for passing to time.localtime()
+        delay = getenv('WAIT_MINUTES') * 60
+        last_gift = None
+
+        if sending:
+            last_gift = self.most_recent_present(is_gift=True).date_received
         else:
-            return False
+            last_gift = self.most_recent_present().date_received
 
-    @orm.db_session
-    def check_send_timer(self):
-        if datetime.now() - timedelta(minutes=int(getenv('WAIT_MINUTES'))
-                                      ) >= self.last_gift_sent_datetime:
-            return True
+        # Are we currently at a later time than the end of the cooldown?
+        if now > time.localtime(last_gift + delay):
+            return False
         else:
-            return False
-
-    @orm.db_session
-    def reset_receive_timer(self):
-        self.last_gift_receive_datetime = datetime.now()
-
-    @orm.db_session
-    def reset_send_timer(self):
-        self.last_gift_sent_datetime = datetime.now()
-
-    @orm.db_session
-    def get_receive_time_remaining(self):
-        remaining = self.last_gift_receive_datetime - datetime.now()
-        return remaining.minutes + 1
+            # Return the number of seconds left in the cooldown
+            return (last_gift + delay) - now
