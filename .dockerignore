@@ -1,0 +1,28 @@
+# Project files
+.github/
+.vscode/
+docs/
+.env
+.env.example
+.gitignore
+README.md
+*.code-workspace
+
+# Python stuff
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+.Python
+env
+pip-log.txt
+pip-delete-this-directory.txt
+.tox
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*,cover
+*.log
+.git
