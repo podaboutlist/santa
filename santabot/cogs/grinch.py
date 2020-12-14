@@ -19,6 +19,8 @@ import discord
 import typing
 from discord.ext import commands
 from os import getenv
+from pony import orm
+from ..db.models import Server
 from ..grinch_manager import GrinchManager
 
 
@@ -32,7 +34,6 @@ class GrinchCommands(commands.Cog):
         self.bot = bot
         self.grinch = None
         self.webhook_name = getenv('WEBHOOK_NAME')
-        self.webhook_avi_url = getenv('WEBHOOK_AVATAR_URL')
 
     @commands.group()
     @commands.has_permissions(manage_messages=True)
@@ -52,34 +53,33 @@ class GrinchCommands(commands.Cog):
 
     @grinch.command()
     @commands.has_permissions(manage_messages=True)
-    async def summon(self,
-                     ctx: discord.ext.commands.Context,
-                     *,
-                     from_cfg: typing.Optional[str]):
+    async def summon(
+        self,
+        ctx: discord.ext.commands.Context,
+        *,
+        from_cfg: typing.Optional[str]
+    ):
         """@santa grinch summon - Creates a webhook to send Grinch messages
 
         Args:
             ctx (discord.ext.commands.Context): Discord.py command context.
             from_cfg (str, optional): Uses webhook URL from config. For testing
         """
-        await ctx.channel.trigger_typing()
+        # Check if this server is already registered in the DB
+        with orm.db_session:
+            server = self.bot.db.get_or_create(Server, id=ctx.guild.id)
+            new_webhook = None
 
-        # Convert string command to boolean
-        if isinstance(from_cfg, str):
-            from_cfg = from_cfg.lower()
-        from_cfg = from_cfg in ['from_cfg']
-        webhook = None
+            if server.is_configured():
+                self.grinch = GrinchManager(server.webhook_url)
+                self.grinch.send_message('You already summoned me here >:)')
+                return
 
-        if from_cfg:
-            # If we used @santa grinch summon from_cfg, we load the webhook URL
-            # from our .env config. This will be superceded when database
-            # storage and retrieval is developed.
-            webhook = getenv('WEBHOOK_URL')
-        else:
-            # Creates a Webhook for the text channel _and_ a Webhook object
-            # which we use for messaging.
+            await ctx.channel.trigger_typing()
+
+            # Create a new Webhook since this Server doesn't have one
             try:
-                webhook = await ctx.channel.create_webhook(
+                new_webhook = await ctx.channel.create_webhook(
                     name=self.webhook_name,
                     reason='{0} summoned {1}'.format(
                         ctx.author.display_name,
@@ -87,27 +87,27 @@ class GrinchCommands(commands.Cog):
                     )
                 )
             except discord.Forbidden:
-                await ctx.send("I can't create a webhook for this channel.")
+                await ctx.send(
+                    "(error) I can't create a webhook for this channel."
+                )
                 return
 
-            # The Webhook returned from create_webhook uses an async adapter,
-            # but we want it to be synchronous. To fix this, we construct a new
-            # Webhook object using our old one's ID and token.
-            webhook = discord.Webhook.partial(
-                webhook.id,
-                webhook.token,
-                adapter=discord.RequestsWebhookAdapter()
+            server.add_webhook(
+                channel_id=ctx.channel.id,
+                webhook_url=new_webhook.url
             )
 
-        self.grinch = GrinchManager(
-            webhook,
-            self.webhook_name,
-            self.webhook_avi_url
-        )
+            self.grinch = GrinchManager(new_webhook.url)
 
-        print('> {0}#{1} ({2}) created Webhook for channel #{3} ({4})'
-              .format(ctx.author.name, ctx.author.discriminator,
-                      ctx.author.mention, ctx.channel.name, ctx.channel.id))
+            # End of orm.db_session context
+
+        print('> {0}#{1} ({2}) created Webhook for channel #{3} ({4})'.format(
+            ctx.author.name,
+            ctx.author.discriminator,
+            ctx.author.mention,
+            ctx.channel.name,
+            ctx.channel.id
+        ))
 
         await ctx.send('{0} summoned the Grinch!'.format(ctx.author.mention))
 
@@ -124,19 +124,51 @@ class GrinchCommands(commands.Cog):
         Args:
             ctx (discord.ext.commands.Context): Discord.py command context.
         """
+        reason = '{0} banished the Grinch!'
+
+        # Delete the Webhook URL from the DB
+        with orm.db_session:
+            server = Server.get(id=ctx.guild.id)
+
+            if (not server) or (not server.is_configured()):
+                await ctx.send(
+                    "(error) This server doesn't have an associated Webhook."
+                )
+                return
+
+            # Remove Wenook information from the DB
+            server.remove_webhook()
+
+            # End of orm.db_session context
+
+        # Remove the Webhook from the Discord Guild
         try:
-            self.grinch.die(ctx.author.display_name)
-            print('> {0}#{1} ({2}) banished the Grinch.'.format(
-                ctx.author.name,
-                ctx.author.discriminator,
-                ctx.author.mention
-            ))
+            self.grinch.webhook.delete(
+                reason=reason.format((
+                    ctx.author.name,
+                    "#",
+                    ctx.author.discriminator
+                ))
+            )
+        except AttributeError:
+            # self.grinch or self.grinch.webhook doesn't exist
+            pass
         except discord.Forbidden:
-            await ctx.send("Please give me the `manage webhook` permission.")
-        else:
-            await ctx.send('{0} banished the Grinch!'
-                           .format(ctx.author.mention))
-            self.grinch = None
+            await ctx.send("Please give me the `manage webhooks` permission.")
+            return
+        except discord.NotFound:
+            await ctx.send('(error): Webhook not found. Already deleted?')
+
+        print('> {0}#{1} ({2}) deleted Webhook for channel #{3} ({4})'.format(
+            ctx.author.name,
+            ctx.author.discriminator,
+            ctx.author.mention,
+            ctx.channel.name,
+            ctx.channel.id
+        ))
+
+        await ctx.send(reason.format(ctx.author.mention))
+        self.grinch = None
 
     @grinch.command()
     @commands.has_permissions(manage_messages=True)
@@ -149,6 +181,8 @@ class GrinchCommands(commands.Cog):
         """
         if (self.grinch):
             self.grinch.send_message(msg)
+        else:
+            await ctx.send('No one has added the Grinch to this channel yet.')
 
 
 def setup(bot: discord.ext.commands.Bot):

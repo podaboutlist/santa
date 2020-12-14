@@ -18,54 +18,255 @@
 import discord
 import typing
 from discord.ext import commands
+from pony import orm
+from random import randint
+from math import ceil
+from ..db.models import Present, Server, User
+from ..grinch_manager import GrinchManager
 
 
 class Give(commands.Cog):
     """Parent class for commands that request presents.
     """
+
     def __init__(self, bot):
         self.bot = bot
+        self.please = False
 
+    # -------------------------------------------------------------------------
+    # Discord.py `give` command
+    # -------------------------------------------------------------------------
     @commands.command()
-    async def give(self, ctx,
-                   recipient: typing.Union[discord.Member, str], *args):
+    async def give(
+        self,
+        ctx: discord.ext.commands.Context,
+        recipient: typing.Union[discord.Member, str],
+        *,
+        present_name: str
+    ):
         """Command to request a present for oneself or another User
 
         Args:
             ctx (discord.ext.commands.Context): Discord.py command context.
-            recipient (typing.Union[discord.Member, str]): Either the recipient
-                of the present (a Member), or the first word of the Present.
-            *args: Words describing the Present.
+            recipient (discord.Member or str): Either a User @mention or a
+                word like 'me'.
+            present_name (str): The name of the present.
         """
-        await ctx.channel.trigger_typing()
+        with orm.db_session:
+            await self.__do_gifting(ctx, recipient, present_name)
 
-        if isinstance(recipient, discord.Member):
-            await ctx.send(
-                'Ho ho ho {0}, check under your tree for {1} from {2}!'
-                .format(recipient.mention,
-                        " ".join(args),
-                        ctx.author.mention))
-        else:
-            await ctx.send('Ho ho ho! Check under your tree for {0}!'
-                           .format(" ".join(args)))
-
+    # -------------------------------------------------------------------------
+    # Discord.py `please` prefix for `give` command
+    # -------------------------------------------------------------------------
     @commands.command()
-    async def please(self, ctx, _,
-                     recipient: typing.Union[discord.Member, str],
-                     *args):
+    async def please(
+        self,
+        ctx: discord.ext.commands.Context,
+        _: str,  # give
+        recipient: typing.Union[discord.Member, str],  # @user or 'me'
+        *,
+        present_name: str
+    ):
         """Command for pleasantly asking for a present.
 
         Args:
             ctx (discord.ext.commands.Context): Discord.py command context.
-            _ ([type]): The `give` prefix. Not used.
-            recipient (typing.Union[discord.Member, str]): Either the recipient
-                of the present (a Member), or the first word of the Present.
-            *args: Words describing the Present.
+            _ (str): The `give` prefix. Not used.
+            recipient (discord.Member or str]): Either the recipient of the
+                present (a Member), or the first word of the Present.
+            present_name (str): The name of the present.
         """
-        await ctx.channel.trigger_typing()
+        with orm.db_session:
+            await self.__do_gifting(ctx, recipient, present_name, please=True)
 
-        await self.give(ctx, recipient, *args)
-        await ctx.send('Thank you for saying please!')
+    # -------------------------------------------------------------------------
+    # __do_gifting() handles the majority of the gift sending logic
+    # -------------------------------------------------------------------------
+    async def __do_gifting(
+        self,
+        ctx: discord.ext.commands.Context,
+        recipient: typing.Union[discord.Member, str],
+        present_name: str,
+        *,
+        please=False
+    ):
+        """Underlying logic for `@santa give` and @santa please give`
+
+        Args:
+            ctx (discord.ext.commands.Context): [description]
+            recipient (typing.Union[discord.Member, str]): [description]
+            present_name (str): [description]
+            please (bool, optional): [description]. Defaults to False.
+        """
+        invoking_user = self.bot.db.get_or_create(User, id=ctx.author.id)
+        server = Server.get(id=ctx.guild.id)
+        grinch = None
+        grinch_visit = False
+
+        if (not server) or (not server.is_configured()):
+            await ctx.send(
+                '(error) No Webhook found for this server.\n'
+                'Please ask an admin to use `@santa grinch summon`.'
+            )
+            return
+        elif ctx.channel.id != server.channel_id:
+            # Don't do anything if we're not in the same channel as
+            # the Webhook
+            return
+        else:
+            grinch = GrinchManager(server.webhook_url)
+
+        # Let the User know we're doing something if this takes a while
+        await ctx.trigger_typing()
+
+        # Send a present from one User to another
+        if isinstance(recipient, discord.Member):
+            cooldown = invoking_user.check_cooldown(sending_gift=True)
+            if cooldown:
+                delay = self.__to_minutes(cooldown)
+
+                await ctx.send(
+                    "I'm sorry {0}, but you need to wait **{1}** minutes "
+                    "before you can send another gift."
+                    .format(ctx.author.mention, delay)
+                )
+                return
+
+            # Send a present. 0% chance of the Grinch showing up.
+            self.__send_present(
+                invoking_user, recipient, present_name, please)
+
+            await ctx.send(
+                'Ho ho ho {0}, check under your tree for {1} from {2}!'
+                .format(recipient.mention, present_name, ctx.author.mention)
+            )
+
+            # Our gifting work here is done (no Grinch for sent gifts)
+            return
+
+        # Send a present to the user who asked for one
+        cooldown = invoking_user.check_cooldown()
+        if cooldown:
+            delay = self.__to_minutes(cooldown)
+            minute_s = 'minutes' if delay != 1 else 'minute'
+
+            # No longer punishing the user with a cooldown reset if they
+            # don't say please.
+            await ctx.send(
+                "Sorry, {0}, but you gotta chill with the presents. You "
+                "gotta wait **{1} {2}** until I'll give you another hit."
+                .format(ctx.author.mention, delay, minute_s)
+            )
+
+            return
+
+        # Cache the user's present count because it might get reset by
+        # __give_present
+        tmp_present_count = invoking_user.owned_present_count
+        # Give the user the present and see if the Grinch steals their presents
+        stolen = self.__give_present(
+            invoking_user,
+            present_name,
+            please=please
+        )
+
+        # Santa gave us our Present and we avoided the Grinch!
+        if not stolen:
+            await ctx.send(
+                'Ho ho ho {0}! Check under your tree for {1}!'
+                .format(ctx.author.mention, present_name)
+            )
+            return
+
+        # Gotta let the user know we stole their presents
+        just_stolen = '**{0}** {1}'.format(
+            tmp_present_count,
+            'present' if tmp_present_count == 1 else 'presents'
+        )
+
+        grinch.send_message(
+            'Heh heh heh... I just stole {0} from you, {1}!\n'
+            .format(just_stolen, ctx.author.mention),
+            'That makes it **{0}** so far!\n'
+            .format(invoking_user.stolen_present_count),
+            'https://i.imgur.com/iqEeKrF.jpg'
+        )
+
+        await ctx.send('Ah god damn it. He did it again.')
+
+    # -------------------------------------------------------------------------
+    # __give_present() handles the logic for a User who asked for a present
+    # -------------------------------------------------------------------------
+    def __give_present(
+        self,
+        invoking_user: discord.Member,
+        present_name: str,
+        *,
+        please=False
+    ) -> bool:
+        """Give a present to a user who asked for one, then try to steal it.
+
+        Args:
+            invoking_user (discord.Member): Who asked for the present
+            present_name (str): The name of the present
+            please (bool, optional): Did they say please? Defaults to False.
+
+        Returns:
+            bool: Whether the Grinch stole their presents.
+        """
+        present = Present(
+            name=present_name,
+            owner=invoking_user,
+            please=please
+        )
+
+        invoking_user.increment_owned_presents()
+
+        return invoking_user.try_steal_presents()
+
+    # -------------------------------------------------------------------------
+    # __send_present() handles the logic for sending gifts from User to User
+    # -------------------------------------------------------------------------
+    def __send_present(
+        self,
+        invoking_user: discord.Member,
+        recipient: discord.Member,
+        present_name: str,
+        please=False
+    ):
+        """One user sends a present to another.
+
+        Args:
+            invoking_user (discord.Member): Who sent the gift.
+            recipient (discord.Member): Who the gift is for.
+            present_name (str): The name of the gift.
+            please (bool, optional): The magic word. Defaults to False.
+        """
+        recipient = self.bot.db.get_or_create(User, id=recipient.id)
+
+        present = Present(
+            name=present_name,
+            owner=recipient,
+            gifter=invoking_user,
+            please=please
+        )
+
+        recipient.increment_owned_presents()
+        invoking_user.increment_gifted_presents()
+
+    # -------------------------------------------------------------------------
+    # __to_minutes() is just `math.ciel()`` with no `import math`
+    # -------------------------------------------------------------------------
+    def __to_minutes(self, td) -> int:
+        """Hack to round up int conversion without importing math.ceil
+
+        Args:
+            td (datetime.timedelta): The timedelta remaining
+
+        Returns:
+            int: The number of minutes (rounded up)
+        """
+        return int(ceil(td.total_seconds() / 60))
 
 
 def setup(bot):

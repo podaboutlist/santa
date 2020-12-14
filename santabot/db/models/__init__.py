@@ -2,6 +2,6 @@
 # https://stackoverflow.com/a/51671065/3722806
 
 from ._base import db
-from . import present
-from . import server
-from . import user
+from .present import Present
+from .server import Server
+from .user import User

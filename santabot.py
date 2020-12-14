@@ -19,6 +19,8 @@
 from discord.ext import commands
 from dotenv import load_dotenv
 from os import getenv
+from pony import orm
+from santabot.db import db
 
 
 load_dotenv()
@@ -28,6 +30,7 @@ santa = commands.Bot(
     command_prefix=commands.when_mentioned,
     owner_id=getenv('BOT_OWNER_ID')
 )
+santa.db = db
 
 
 @santa.event
@@ -37,7 +40,34 @@ async def on_ready():
 
 if __name__ == '__main__':
     print('> Starting Santa Bot...')
+
     bot_token = getenv('BOT_TOKEN')
+    use_sqlite = bool(getenv('USE_SQLITE', default=True))
+
+    print('> Initialising database connection...')
+    if use_sqlite:
+        print('> Using SQLite DB in memory for testing.')
+        santa.db.bind(provider='sqlite',
+                      filename='santabot.db', create_db=True)
+
+        print('> Generating database mapping...')
+        santa.db.generate_mapping(create_tables=True)
+    else:
+        print('> Using PostgreSQL DB.')
+        db_host = getenv('DB_HOST', default='127.0.0.1')
+        db_port = getenv('DB_PORT', default='5432')
+        db_name = getenv('DB_NAME')
+        db_user = getenv('DB_USER')
+        db_pass = getenv('DB_PASS')
+        db_table_prefix = getenv('DB_TABLE_PREFIX')
+
+        santa.db.bind(
+            provider='postgres',
+            host='{0}:{1}'.format(db_host, db_port),
+            user=db_user,
+            password=db_pass,
+            database=db_name
+        )
 
     print('> Loading cogs...')
     for cog in cogs:
