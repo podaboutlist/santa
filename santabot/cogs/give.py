@@ -62,7 +62,7 @@ class Give(commands.Cog):
     async def please(
         self,
         ctx: discord.ext.commands.Context,
-        _: str,  # give
+        give: str,  # give
         recipient: typing.Union[discord.Member, str],  # @user or 'me'
         *,
         present_name: str
@@ -76,6 +76,10 @@ class Give(commands.Cog):
                 present (a Member), or the first word of the Present.
             present_name (str): The name of the present.
         """
+        if give.lower() != 'give':
+            # They said something other than "please give"
+            return
+
         with orm.db_session:
             await self.__do_gifting(ctx, recipient, present_name, please=True)
 
@@ -263,7 +267,7 @@ class Give(commands.Cog):
         invoking_user.increment_gifted_presents()
 
     # -------------------------------------------------------------------------
-    # __to_minutes() is just `math.ciel()`` with no `import math`
+    # __to_minutes() is just `math.ciel()` with no `import math`
     # -------------------------------------------------------------------------
     def __to_minutes(self, td) -> int:
         """Hack to round up int conversion without importing math.ceil
