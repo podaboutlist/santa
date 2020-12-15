@@ -62,7 +62,7 @@ class Give(commands.Cog):
     async def please(
         self,
         ctx: discord.ext.commands.Context,
-        _: str,  # give
+        give: str,  # give
         recipient: typing.Union[discord.Member, str],  # @user or 'me'
         *,
         present_name: str
@@ -71,11 +71,16 @@ class Give(commands.Cog):
 
         Args:
             ctx (discord.ext.commands.Context): Discord.py command context.
-            _ (str): The `give` prefix. Not used.
+            give (str): The `give` prefix. If not "give," command doesn't do
+                anything.
             recipient (discord.Member or str]): Either the recipient of the
                 present (a Member), or the first word of the Present.
             present_name (str): The name of the present.
         """
+        if give.lower() != 'give':
+            # They said something other than "please give"
+            return
+
         with orm.db_session:
             await self.__do_gifting(ctx, recipient, present_name, please=True)
 
@@ -154,8 +159,8 @@ class Give(commands.Cog):
             # No longer punishing the user with a cooldown reset if they
             # don't say please.
             await ctx.send(
-                "Sorry, {0}, but you gotta chill with the presents. You "
-                "gotta wait **{1} {2}** until I'll give you another hit."
+                "Sorry, {0}, but you have to chill with the presents. "
+                "Wait another **{1} {2}** and I'll give you another hit."
                 .format(ctx.author.mention, delay, minute_s)
             )
 
@@ -263,7 +268,7 @@ class Give(commands.Cog):
         invoking_user.increment_gifted_presents()
 
     # -------------------------------------------------------------------------
-    # __to_minutes() is just `math.ciel()`` with no `import math`
+    # __to_minutes() is just `math.ciel()` with no `import math`
     # -------------------------------------------------------------------------
     def __to_minutes(self, td) -> int:
         """Hack to round up int conversion without importing math.ceil
