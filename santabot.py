@@ -42,16 +42,19 @@ if __name__ == '__main__':
     print('> Starting Santa Bot...')
 
     bot_token = getenv('BOT_TOKEN')
-    use_sqlite = bool(getenv('USE_SQLITE', default=True))
+    if not bot_token:
+        raise Exception(
+            'Error: Expected a BOT_TOKEN, got {0}. Did you set up .env?'
+            .format(bot_token)
+        )
+
+    use_sqlite = getenv('USE_SQLITE')
 
     print('> Initialising database connection...')
-    if use_sqlite:
-        print('> Using SQLite DB in memory for testing.')
+    if use_sqlite.lower() == 'true':  # No easy way to convert str to bool :/
+        print('> Using SQLite DB for testing.')
         santa.db.bind(provider='sqlite',
                       filename='santabot.db', create_db=True)
-
-        print('> Generating database mapping...')
-        santa.db.generate_mapping(create_tables=True)
     else:
         print('> Using PostgreSQL DB.')
         db_host = getenv('DB_HOST', default='127.0.0.1')
@@ -63,11 +66,15 @@ if __name__ == '__main__':
 
         santa.db.bind(
             provider='postgres',
-            host='{0}:{1}'.format(db_host, db_port),
+            host=db_host,
+            port=db_port,
             user=db_user,
             password=db_pass,
             database=db_name
         )
+
+    print('> Generating database mapping...')
+    santa.db.generate_mapping(create_tables=True)
 
     print('> Loading cogs...')
     for cog in cogs:
