@@ -26,7 +26,7 @@ class Invite(commands.Cog):
 
     @commands.command()
     async def invite(self, ctx: commands.Context):
-        """@santa invite: Returns developer info to the requester.
+        """@santa invite: invite your friends to the Podcast About List discord.
 
         Args:
             ctx (discord.ext.commands.Context): Discord.py command context.

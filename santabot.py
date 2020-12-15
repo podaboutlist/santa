@@ -25,7 +25,7 @@ from santabot.db import db
 
 load_dotenv()
 
-cogs = ['give', 'grinch', 'invite']
+cogs = ['give', 'grinch', 'invite' ]
 santa = commands.Bot(
     command_prefix=commands.when_mentioned,
     owner_id=getenv('BOT_OWNER_ID')

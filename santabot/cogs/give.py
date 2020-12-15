@@ -44,7 +44,7 @@ class Give(commands.Cog):
         *,
         present_name: str
     ):
-        """Command to request a present for oneself or another User
+        """@SantaBox give [@user]: request a present for yourself or another user.
 
         Args:
             ctx (discord.ext.commands.Context): Discord.py command context.
@@ -67,7 +67,7 @@ class Give(commands.Cog):
         *,
         present_name: str
     ):
-        """Command for pleasantly asking for a present.
+        """@SantaBot please give [@user]: pleasantly request a present.
 
         Args:
             ctx (discord.ext.commands.Context): Discord.py command context.

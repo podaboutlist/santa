@@ -35,7 +35,7 @@ class GrinchCommands(commands.Cog):
         self.grinch = None
         self.webhook_name = getenv('WEBHOOK_NAME')
 
-    @commands.group()
+    @commands.group(hidden=True)
     @commands.has_permissions(manage_messages=True)
     async def grinch(self, ctx: discord.ext.commands.Context):
         """@santa grinch - Base command for Grinch webhook management commands.

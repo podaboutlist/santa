@@ -15,3 +15,28 @@
 #  along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 from discord.ext import commands
+
+
+class Help(commands.Cog):
+    """Parent class for the help command.
+    """
+
+    def __init__(self, bot):
+        self.bot = bot
+
+    @commands.command()
+    async def help(self, ctx: commands.Context):
+        """@santa invite: Returns a formatted link to all of the commands accessible to regular users.
+
+        Args:
+            ctx (discord.ext.commands.Context): Discord.py command context.
+        """
+        await ctx.channel.trigger_typing()
+        await ctx.send(
+            "Find a list of commands at: http://podcast-about-list.github.io/\n"
+        )
+
+
+def setup(bot):
+
+    bot.add_cog(Help(bot))
