@@ -109,7 +109,7 @@ class Stats(commands.Cog):
             f'- {stats_user_db.owned_present_count} owned presents\n'
             f'- {stats_user_db.stolen_present_count} stolen presents\n'
             f'- {stats_user_db.gifted_present_count} gifted presents\n'
-            f'- {stats_user_db.owned_present_count} visits from the grinch'
+            f'- {stats_user_db.grinch_visit_count} visits from the grinch'
         )
 
 
