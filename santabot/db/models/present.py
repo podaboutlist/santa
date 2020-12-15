@@ -24,7 +24,7 @@ class Present(db.Entity):
         Returns:
             int: All time number of presents distributed.
         """
-        return db.count(lambda p: True)
+        return db.select(lambda p: True).count()
 
     @staticmethod
     @orm.db_session
@@ -34,7 +34,7 @@ class Present(db.Entity):
         Returns:
             int: Number of non-stolen presents.
         """
-        return db.count(lambda p: not p.stolen)
+        return db.select(lambda p: not p.stolen).count()
 
     @staticmethod
     @orm.db_session
@@ -44,7 +44,7 @@ class Present(db.Entity):
         Returns:
             int: Number of stolen presents.
         """
-        return db.count(lambda p: p.stolen)
+        return db.select(lambda p: p.stolen).count()
 
     @staticmethod
     @orm.db_session
@@ -54,7 +54,7 @@ class Present(db.Entity):
         Returns:
             int: Number of self-gifted presents.
         """
-        return db.count(lambda p: not p.stolen and p.owner.id == p.gifter.id)
+        return db.select(lambda p: not p.stolen and p.owner.id == p.gifter.id).count()
 
     @staticmethod
     @orm.db_session
@@ -64,7 +64,7 @@ class Present(db.Entity):
         Returns:
             int: Number of self-gifted presents.
         """
-        return db.count(lambda p: p.please)
+        return db.select(lambda p: p.please).count()
 
     @orm.db_session
     def steal(self, timestamp=None) -> bool:
