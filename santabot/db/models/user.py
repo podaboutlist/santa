@@ -215,7 +215,6 @@ class User(db.Entity):
 
         # If the user has no gifts
         if not last_gift:
-            print('no last gift')
             return False
 
         last_gift = last_gift.date_received

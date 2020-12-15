@@ -6,6 +6,7 @@ class Server(db.Entity):
     id = orm.PrimaryKey(int, size=64)
     channel_id = orm.Optional(int, size=64)
     webhook_url = orm.Optional(str)
+    presents = orm.Set('Present', reverse='server')
 
     @orm.db_session
     def is_configured(self) -> bool:

@@ -1,11 +1,13 @@
 from datetime import datetime
 from pony import orm
 from ._base import db
+from .server import Server
 from .user import User
 
 
 class Present(db.Entity):
     id = orm.PrimaryKey(int, size=64, auto=True)
+    server = orm.Required(Server)
     name = orm.Required(str)
     owner = orm.Required(User)
     gifter = orm.Optional(User)
