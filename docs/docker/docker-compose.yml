@@ -2,6 +2,7 @@ version: '3.9'
 services:
   santabot:
     image: ralphorama/santa
+    restart: always
     environment:
       BOT_TOKEN: ''
       # This is my account ID (Ralph#0001). Change it lol.
@@ -9,11 +10,12 @@ services:
       WEBHOOK_NAME: The Grinch
       WEBHOOK_AVATAR_URL: https://i.imgur.com/orRBRzi.png
       GRINCH_STEAL_THRESHOLD: 15
-      SAID_PLEASE_BONUS: 1.5
+      SAID_PLEASE_BONUS: 1.005
       GIFT_SEND_DELAY_MINUTES: 2
       GIFT_ASK_DELAY_MINUTES: 5
       USE_SQLITE: 'False'
-      DB_HOST: 127.0.0.1
+      # Connections between containers are achieved with the name of the entry
+      DB_HOST: db
       DB_PORT: 5432
       DB_NAME: santabot
       DB_USER: santabot
