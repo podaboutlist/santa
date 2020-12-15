@@ -14,7 +14,7 @@ assignees: ''
 -->
 
 
-### Description of the New Feature
+## Description of the New Feature
 
 <!-- Please write a few sentences describing the change you are requesting. -->
 
@@ -23,21 +23,24 @@ assignees: ''
 Related issue(s): #<234>, #<567>, ...
 
 
-### Added Functionality
+## Added Functionality
 
 This feature changes or adds functionality to:
 
 <!-- Please check any/all that apply by replacing [ ] with [x] -->
 
-   - [ ] The Discord Bot
-   - [ ] The Database or API
-   - [ ] Other program functionality (`.env`, scripts, etc.)
-   - [ ] Documentation
-   - [ ] Containerization
-   - [ ] CI
-   - [ ] Other: <!-- Please add a description here if this box is checked -->
+  - [ ] The Discord Bot
+  - [ ] The Database or API
+  - [ ] Other program functionality (`.env`, scripts, etc.)
+  - [ ] Documentation
+  - [ ] Containerization
+  - [ ] CI
+  - [ ] Other: <!-- Please add a description here if this box is checked -->
 
-   - [ ] My feature request **does not** add any external dependencies
+
+## New/Additional Dependencies
+
+  - [ ] My feature request **does not** add any external dependencies
 
 <!--
     If your request _does_ add external dependencies (i.e. it modifies

@@ -13,13 +13,12 @@ assignees: ''
     comment blocks.
 -->
 
-
-### Description of the Bug
+## Description of the Bug
 
 <!-- Provide a description of the bug. Attach screenshots if you'd like. -->
 
 
-### Steps to Reproduce the Bug
+## Steps to Reproduce the Bug
 
 <!-- Write down what steps, in order, make the bug happen -->
 
@@ -28,14 +27,14 @@ assignees: ''
    3. Step 3
 
 
-### The Bug Affects
+## The Bug Affects
 
 <!-- Please check all that apply by replacing [ ] with [x] -->
 
-   - [ ] The Discord Bot
-   - [ ] The Database or API
-   - [ ] Other program functionality (`.env`, scripts, etc.)
-   - [ ] Documentation
-   - [ ] Containerization
-   - [ ] CI
-   - [ ] Other: <!-- Please add a description here if this box is checked -->
+  - [ ] The Discord Bot
+  - [ ] The Database or API
+  - [ ] Other program functionality (`.env`, scripts, etc.)
+  - [ ] Documentation
+  - [ ] Containerization
+  - [ ] CI
+  - [ ] Other: <!-- Please add a description here if this box is checked -->
