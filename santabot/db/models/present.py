@@ -16,29 +16,55 @@ class Present(db.Entity):
     date_received = orm.Required(datetime, default=datetime.now(), precision=6)
     date_stolen = orm.Optional(datetime)
 
+    @staticmethod
     @orm.db_session
-    def calculate_all_time_presents(self) -> int:
+    def calculate_all_time_presents() -> int:
         """Calculate all time number of presents distributed.
 
         Returns:
             int: All time number of presents distributed.
         """
-        return db.count(p for p in Present)
+        return db.count(lambda p: True)
 
+    @staticmethod
     @orm.db_session
-    def calculate_active_presents(self) -> int:
+    def calculate_active_presents() -> int:
         """Calculate how many presents are currently not 'stolen'
 
         Returns:
             int: Number of non-stolen presents.
         """
-        return db.count(
-            lambda p: p.stolen is False
-        )
+        return db.count(lambda p: not p.stolen)
 
+    @staticmethod
     @orm.db_session
-    def calculate_all_stolen_presents(self) -> int:
+    def calculate_all_stolen_presents() -> int:
+        """Calculate how many presents are currently 'stolen'
+
+        Returns:
+            int: Number of stolen presents.
+        """
         return db.count(lambda p: p.stolen)
+
+    @staticmethod
+    @orm.db_session
+    def calculate_all_self_presents() -> int:
+        """Calculate how many presents were given to a user by themselves
+
+        Returns:
+            int: Number of self-gifted presents.
+        """
+        return db.count(lambda p: not p.stolen and p.owner.id == p.gifter.id)
+
+    @staticmethod
+    @orm.db_session
+    def calculate_please() -> int:
+        """Calculate how many presents were given to a user by themselves
+
+        Returns:
+            int: Number of self-gifted presents.
+        """
+        return db.count(lambda p: p.please)
 
     @orm.db_session
     def steal(self, timestamp=None) -> bool:
