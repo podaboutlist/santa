@@ -1,7 +1,7 @@
 version: '3.9'
 services:
   santabot:
-    build: .
+    image: ralphorama/santa
     environment:
       BOT_TOKEN: ''
       # This is my account ID (Ralph#0001). Change it lol.
@@ -27,4 +27,4 @@ services:
       POSTGRES_PASSWORD: santabot
       POSTGRES_DB: santabot
     volumes:
-      - <your_path_here>:/var/lib/postgresql/data
+      - ./pgdata:/var/lib/postgresql/data

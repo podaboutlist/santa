@@ -1,3 +1,9 @@
+# This document was an early draft and is now archived.
+
+# This document was an early draft and is now archived.
+
+---
+
 # Santa bot Design Doc
 
 ## Table of Contents
