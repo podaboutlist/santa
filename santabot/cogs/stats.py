@@ -26,20 +26,40 @@ class Stats(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
+    # -------------------------------------------------------------------------
+    # Discord.py `stats` command
+    # -------------------------------------------------------------------------
     @commands.command()
     async def stats(
             self,
             ctx: discord.ext.commands.Context,
             subject: typing.Union[discord.Member, str]
     ):
+        """Command to get stats for a player or the server
+
+        Args:
+            ctx (discord.ext.commands.Context): Discord.py command context.
+            subject (discord.Member or str): Either a User @mention or a
+                word like 'me'.
+        """
         with orm.db_session:
             await self.__make_stats(ctx, subject)
 
+    # -------------------------------------------------------------------------
+    # __make_stats() handles the stats logic
+    # -------------------------------------------------------------------------
     async def __make_stats(
             self,
             ctx: discord.ext.commands.Context,
             subject: typing.Union[discord.Member, str]
     ):
+        """Underlying logic for `@santa stats`
+
+        Args:
+            ctx (discord.ext.commands.Context): Discord.py command context.
+            subject (discord.Member or str): Either a User @mention or a
+                word like 'me'.
+        """
         server = Server.get(id=ctx.guild.id)
         if (not server) or (not server.is_configured()):
             await ctx.send(
@@ -61,7 +81,7 @@ class Stats(commands.Cog):
         elif subject == 'me':
             stats_user = ctx.author
             stats_user_db = self.bot.db.get_or_create(User, id=ctx.author.id)
-        else:  # if argument is not "me" or a mention, give global stats (should it be like this)
+        else:  # if argument is not "me" or a mention, give global stats
             await ctx.send("global stats go here")
             return
 
