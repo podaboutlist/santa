@@ -54,7 +54,9 @@ class Present(db.Entity):
         Returns:
             int: Number of self-gifted presents.
         """
-        return db.select(lambda p: not p.stolen and p.owner.id == p.gifter.id).count()
+        return db.select(
+            lambda p: not p.stolen and p.owner.id == p.gifter.id
+        ).count()
 
     @staticmethod
     @orm.db_session
