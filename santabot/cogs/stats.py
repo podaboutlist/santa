@@ -96,9 +96,9 @@ class Stats(commands.Cog):
                 f"Of the {active_presents} that found their way to their "
                 f"recipients, {self_presents} were given by their owners "
                 f"to themselves and {non_self_presents} were given to "
-                f"someone else.\n"
-                f"{please_count} users have said please when asking for a gift, "
-                f"while {non_please_count} rude children did not.\n"
+                f"someone else.\n{please_count} users have said please "
+                f"when asking for a gift, while {non_please_count} "
+                f"rude children did not.\n"
                 f"To see your personal stats, use `@santa stats me`.\n"
                 f"To see another user's stats, use `@santa stats @username`."
             )
