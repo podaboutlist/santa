@@ -18,7 +18,7 @@ import discord
 import typing
 from discord.ext import commands
 from pony import orm
-from ..db.models import Server, User
+from ..db.models import Present, Server, User
 
 
 class Stats(commands.Cog):
@@ -82,7 +82,25 @@ class Stats(commands.Cog):
             stats_user = ctx.author
             stats_user_db = self.bot.db.get_or_create(User, id=ctx.author.id)
         else:  # if argument is not "me" or a mention, give global stats
-            await ctx.send("global stats go here")
+            all_time_presents = Present.calculate_all_time_presents()
+            active_presents = Present.calculate_active_presents()
+            stolen_presents = all_time_presents - active_presents
+            self_presents = Present.calculate_all_self_presents()
+            non_self_presents = active_presents - self_presents
+            please_count = Present.calculate_please()
+            non_please_count = all_time_presents - please_count
+            await ctx.send(
+                f"Stats for the server:\n"
+                f"{all_time_presents} have been gifted, "
+                f"{stolen_presents} of which were stolen by The Grinch.\n"
+                f"Of the {active_presents} that found their way to their recipients, "
+                f"{self_presents} were given by their owners to themselves and "
+                f"{non_self_presents} were given to someone else.\n"
+                f"{please_count} users have said please when asking for a gift, "
+                f"while {non_please_count} rude children did not.\n"
+                f"To see your personal stats, use `@santa stats me`.\n"
+                f"To see another user's stats, use `@santa stats @username`."
+            )
             return
 
         await ctx.send(
