@@ -134,7 +134,8 @@ class Give(commands.Cog):
 
             # Send a present. 0% chance of the Grinch showing up.
             self.__send_present(
-                invoking_user, recipient, present_name, please)
+                invoking_user, recipient, server, present_name, please
+            )
 
             await ctx.send(
                 'Ho ho ho {0}, check under your tree for {1} from {2}!'
@@ -166,6 +167,7 @@ class Give(commands.Cog):
         # Give the user the present and see if the Grinch steals their presents
         stolen = self.__give_present(
             invoking_user,
+            server,
             present_name,
             please=please
         )
@@ -200,6 +202,7 @@ class Give(commands.Cog):
     def __give_present(
         self,
         invoking_user: discord.Member,
+        server: Server,
         present_name: str,
         *,
         please=False
@@ -207,8 +210,9 @@ class Give(commands.Cog):
         """Give a present to a user who asked for one, then try to steal it.
 
         Args:
-            invoking_user (discord.Member): Who asked for the present
-            present_name (str): The name of the present
+            invoking_user (discord.Member): Who asked for the present?
+            server (Server): The parent Server of the present.
+            present_name (str): The name of the present.
             please (bool, optional): Did they say please? Defaults to False.
 
         Returns:
@@ -217,6 +221,7 @@ class Give(commands.Cog):
         present = Present(
             name=present_name,
             owner=invoking_user,
+            server=server,
             please=please
         )
 
@@ -231,6 +236,7 @@ class Give(commands.Cog):
         self,
         invoking_user: discord.Member,
         recipient: discord.Member,
+        server: Server,
         present_name: str,
         please=False
     ):
@@ -239,6 +245,7 @@ class Give(commands.Cog):
         Args:
             invoking_user (discord.Member): Who sent the gift.
             recipient (discord.Member): Who the gift is for.
+            server (Server): The parent Server of the present.
             present_name (str): The name of the gift.
             please (bool, optional): The magic word. Defaults to False.
         """
@@ -248,6 +255,7 @@ class Give(commands.Cog):
             name=present_name,
             owner=recipient,
             gifter=invoking_user,
+            server=server,
             please=please
         )
 
