@@ -154,8 +154,8 @@ class Give(commands.Cog):
             # No longer punishing the user with a cooldown reset if they
             # don't say please.
             await ctx.send(
-                "Sorry, {0}, but you gotta chill with the presents. You "
-                "gotta wait **{1} {2}** until I'll give you another hit."
+                "Sorry, {0}, but you have to chill with the presents. "
+                "Wait another **{1} {2}** and I'll give you another hit."
                 .format(ctx.author.mention, delay, minute_s)
             )
 
