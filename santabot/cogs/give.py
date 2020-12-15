@@ -71,7 +71,8 @@ class Give(commands.Cog):
 
         Args:
             ctx (discord.ext.commands.Context): Discord.py command context.
-            _ (str): The `give` prefix. Not used.
+            give (str): The `give` prefix. If not "give," command doesn't do
+                anything.
             recipient (discord.Member or str]): Either the recipient of the
                 present (a Member), or the first word of the Present.
             present_name (str): The name of the present.
