@@ -33,9 +33,9 @@ if __name__ == '__main__':
         db.commit()
 
         print('\n> Generating Presents...')
-        p1 = db.Present(name="test present 01", owner=u1)
-        p2 = db.Present(name="test present 02", owner=u1, gifter=u2)
-        p3 = db.Present(name="test present 03", owner=u3, gifter=u2)
+        p1 = db.Present(name="test present 01", owner=u1, server=s1)
+        p2 = db.Present(name="test present 02", owner=u1, gifter=u2, server=s1)
+        p3 = db.Present(name="test present 03", owner=u3, gifter=u2, server=s1)
         db.commit()
 
         print('\n> Displaying all Users')
