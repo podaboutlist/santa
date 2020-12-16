@@ -21,6 +21,7 @@ from discord.ext import commands
 from pony import orm
 from random import randint
 from math import ceil
+from ..db import db
 from ..db.models import Present, Server, User
 from ..grinch_manager import GrinchManager
 
