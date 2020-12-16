@@ -49,12 +49,18 @@ if __name__ == '__main__':
         )
 
     use_sqlite = getenv('USE_SQLITE')
+    sql_debug = getenv('SQL_DEBUG', False)
+
+    orm.set_sql_debug(sql_debug)
 
     print('> Initialising database connection...')
     if use_sqlite.lower() == 'true':  # No easy way to convert str to bool :/
         print('> Using SQLite DB for testing.')
-        santa.db.bind(provider='sqlite',
-                      filename='santabot.db', create_db=True)
+        santa.db.bind(
+            provider='sqlite',
+            filename='santabot.db',
+            create_db=True
+        )
     else:
         print('> Using PostgreSQL DB.')
         db_host = getenv('DB_HOST', default='127.0.0.1')
