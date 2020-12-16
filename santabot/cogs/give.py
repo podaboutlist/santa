@@ -148,7 +148,8 @@ class Give(commands.Cog):
         await ctx.trigger_typing()
 
         # Send a present from one User to another
-        if isinstance(recipient, discord.Member):
+        if isinstance(recipient, discord.Member) \
+                and recipient.id != invoking_user.id:
             cooldown = invoking_user.check_cooldown(sending_gift=True)
             if cooldown:
                 delay = self.__to_minutes(cooldown)
