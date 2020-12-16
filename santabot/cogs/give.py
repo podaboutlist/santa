@@ -53,9 +53,7 @@ class Give(commands.Cog):
                 word like 'me'.
             present_name (str): The name of the present.
         """
-        with orm.db_session:
-            await self.__do_gifting(ctx, recipient, present_name)
-            db.commit()
+        await self.__do_gifting(ctx, recipient, present_name)
 
     # -------------------------------------------------------------------------
     # Discord.py `please` prefix for `give` command
@@ -83,9 +81,7 @@ class Give(commands.Cog):
             # They said something other than "please give"
             return
 
-        with orm.db_session:
-            await self.__do_gifting(ctx, recipient, present_name, please=True)
-            db.commit()
+        await self.__do_gifting(ctx, recipient, present_name, please=True)
 
     # -------------------------------------------------------------------------
     # Discord.py `gimme` command, equivalent to `give me`
@@ -103,13 +99,12 @@ class Give(commands.Cog):
             ctx (discord.ext.commands.Context): Discord.py command context.
             present_name (str): The name of the present.
         """
-        with orm.db_session:
-            await self.__do_gifting(ctx, 'me', present_name)
-            db.commit()
+        await self.__do_gifting(ctx, 'me', present_name)
 
     # -------------------------------------------------------------------------
     # __do_gifting() handles the majority of the gift sending logic
     # -------------------------------------------------------------------------
+    @orm.db_session
     async def __do_gifting(
         self,
         ctx: discord.ext.commands.Context,
@@ -159,6 +154,7 @@ class Give(commands.Cog):
                     "before you can send another gift."
                     .format(ctx.author.mention, delay)
                 )
+
                 return
 
             # Send a present. 0% chance of the Grinch showing up.
@@ -228,6 +224,7 @@ class Give(commands.Cog):
     # -------------------------------------------------------------------------
     # __give_present() handles the logic for a User who asked for a present
     # -------------------------------------------------------------------------
+    @orm.db_session
     def __give_present(
         self,
         invoking_user: discord.Member,
@@ -256,11 +253,15 @@ class Give(commands.Cog):
 
         invoking_user.increment_owned_presents()
 
-        return invoking_user.try_steal_presents()
+        result = invoking_user.try_steal_presents()
+
+        db.commit()
+        return result
 
     # -------------------------------------------------------------------------
     # __send_present() handles the logic for sending gifts from User to User
     # -------------------------------------------------------------------------
+    @orm.db_session
     def __send_present(
         self,
         invoking_user: discord.Member,
@@ -290,6 +291,8 @@ class Give(commands.Cog):
 
         recipient.increment_owned_presents()
         invoking_user.increment_gifted_presents()
+
+        db.commit()
 
     # -------------------------------------------------------------------------
     # __to_minutes() is just `math.ciel()` with no `import math`
