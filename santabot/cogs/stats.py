@@ -18,6 +18,7 @@ import discord
 import typing
 from discord.ext import commands
 from pony import orm
+from ..db import db
 from ..db.models import Present, Server, User
 
 
@@ -42,12 +43,12 @@ class Stats(commands.Cog):
             subject (discord.Member or str): Either a User @mention or a
                 word like 'me'.
         """
-        with orm.db_session:
-            await self.__make_stats(ctx, subject)
+        await self.__make_stats(ctx, subject)
 
     # -------------------------------------------------------------------------
     # __make_stats() handles the stats logic
     # -------------------------------------------------------------------------
+    @orm.db_session
     async def __make_stats(
             self,
             ctx: discord.ext.commands.Context,
@@ -102,6 +103,8 @@ class Stats(commands.Cog):
                 f"To see your personal stats, use `@santa stats me`.\n"
                 f"To see another user's stats, use `@santa stats @username`."
             )
+
+            db.commit()
             return
 
         await ctx.send(
@@ -111,6 +114,8 @@ class Stats(commands.Cog):
             f'- {stats_user_db.gifted_present_count} gifted presents\n'
             f'- {stats_user_db.grinch_visit_count} visits from the grinch'
         )
+
+        db.commit()
 
 
 def setup(bot):
