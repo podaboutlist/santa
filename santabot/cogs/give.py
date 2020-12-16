@@ -85,6 +85,25 @@ class Give(commands.Cog):
             await self.__do_gifting(ctx, recipient, present_name, please=True)
 
     # -------------------------------------------------------------------------
+    # Discord.py `gimme` command, equivalent to `give me`
+    # -------------------------------------------------------------------------
+    @commands.command()
+    async def gimme(
+        self,
+        ctx: discord.ext.commands.Context,
+        *,
+        present_name: str
+    ):
+        """Command to request a present for oneself
+
+        Args:
+            ctx (discord.ext.commands.Context): Discord.py command context.
+            present_name (str): The name of the present.
+        """
+        with orm.db_session:
+            await self.__do_gifting(ctx, "me", present_name)
+
+    # -------------------------------------------------------------------------
     # __do_gifting() handles the majority of the gift sending logic
     # -------------------------------------------------------------------------
     async def __do_gifting(
@@ -95,7 +114,8 @@ class Give(commands.Cog):
         *,
         please=False
     ):
-        """Underlying logic for `@santa give` and @santa please give`
+        """Underlying logic for `@santa give`, `@santa please give`
+            and `@santa gimme`
 
         Args:
             ctx (discord.ext.commands.Context): [description]
