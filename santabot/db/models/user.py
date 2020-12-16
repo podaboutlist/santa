@@ -73,8 +73,8 @@ class User(db.Entity):
         """
         present_count = self.owned_present_count
 
-        # if present_count < int(getenv('GRINCH_STEAL_THRESHOLD')):
-        # return False
+        if present_count < int(getenv('GRINCH_STEAL_THRESHOLD')):
+            return False
 
         random_int = randint(0, present_count)
         threshold = ((40 * present_count) ** (1 / 2)) - 10  # sqrt(40x) - 10
