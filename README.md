@@ -6,8 +6,6 @@
 Made for the Podcast About List Discord server: [https://podaboutli.st/discord][1]
 
 
-
-
 [1]: https://podaboutli.st/discord
 [2]: https://travis-ci.com/Podcast-About-List/santa
 [3]: https://github.com/Podcast-About-List/santa/blob/master/docs/DESIGN.md
