@@ -77,7 +77,7 @@ class User(db.Entity):
         # return False
 
         random_int = randint(0, present_count)
-        threshold = ((40 * present_count) ** (1 / 2)) + 10  # sqrt(40x) + 10
+        threshold = ((40 * present_count) ** (1 / 2)) - 10  # sqrt(40x) - 10
         threshold = int(threshold)  # Cast to integer, round down
 
         # Being nice gets you places. Here, it gets you a slightly better
