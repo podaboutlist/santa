@@ -53,6 +53,10 @@ class Give(commands.Cog):
                 word like 'me'.
             present_name (str): The name of the present.
         """
+        if isinstance(recipient, str) and recipient.lower() != "me":
+            # They said something other than a username or "me"
+            return
+
         await self.__do_gifting(ctx, recipient, present_name)
 
     # -------------------------------------------------------------------------
