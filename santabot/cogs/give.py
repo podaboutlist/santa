@@ -23,6 +23,7 @@ from random import randint
 from math import ceil
 from ..db.models import Present, Server, User
 from ..grinch_manager import GrinchManager
+from datetime import datetime
 
 
 class Give(commands.Cog):
@@ -247,7 +248,8 @@ class Give(commands.Cog):
             name=present_name,
             owner=invoking_user,
             server=server,
-            please=please
+            please=please,
+            date_received=datetime.now()
         )
 
         invoking_user.increment_owned_presents()
@@ -285,7 +287,8 @@ class Give(commands.Cog):
             owner=recipient,
             gifter=invoking_user,
             server=server,
-            please=please
+            please=please,
+            date_received=datetime.now()
         )
 
         recipient.increment_owned_presents()
