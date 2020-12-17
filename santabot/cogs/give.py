@@ -56,7 +56,8 @@ class Give(commands.Cog):
             # They said something other than a username or "me"
             return
 
-        await self.__do_gifting(ctx, recipient, present_name)
+        with orm.db_session:
+            await self.__do_gifting(ctx, recipient, present_name)
 
     # -------------------------------------------------------------------------
     # Discord.py `please` prefix for `give` command
@@ -84,7 +85,8 @@ class Give(commands.Cog):
             # They said something other than "please give"
             return
 
-        await self.__do_gifting(ctx, recipient, present_name, please=True)
+        with orm.db_session:
+            await self.__do_gifting(ctx, recipient, present_name, please=True)
 
     # -------------------------------------------------------------------------
     # Discord.py `gimme` command, equivalent to `give me`
@@ -102,12 +104,12 @@ class Give(commands.Cog):
             ctx (discord.ext.commands.Context): Discord.py command context.
             present_name (str): The name of the present.
         """
-        await self.__do_gifting(ctx, 'me', present_name)
+        with orm.db_session:
+            await self.__do_gifting(ctx, 'me', present_name)
 
     # -------------------------------------------------------------------------
     # __do_gifting() handles the majority of the gift sending logic
     # -------------------------------------------------------------------------
-    @orm.db_session
     async def __do_gifting(
         self,
         ctx: discord.ext.commands.Context,
@@ -181,7 +183,8 @@ class Give(commands.Cog):
         cooldown = invoking_user.check_cooldown()
         if cooldown:
             delay = self.__to_minutes(cooldown)
-            minute_s = 'minutes' if delay != 1 else 'minute'
+            print(f'> delay is {delay}')
+            minute_s = 'minute' if delay == 1 else 'minutes'
 
             # No longer punishing the user with a cooldown reset if they
             # don't say please.
@@ -231,7 +234,6 @@ class Give(commands.Cog):
     # -------------------------------------------------------------------------
     # __give_present() handles the logic for a User who asked for a present
     # -------------------------------------------------------------------------
-    @orm.db_session
     def __give_present(
         self,
         invoking_user: discord.Member,
@@ -268,7 +270,6 @@ class Give(commands.Cog):
     # -------------------------------------------------------------------------
     # __send_present() handles the logic for sending gifts from User to User
     # -------------------------------------------------------------------------
-    @orm.db_session
     def __send_present(
         self,
         invoking_user: discord.Member,
