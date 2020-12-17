@@ -16,11 +16,14 @@
 #  You should have received a copy of the GNU Affero General Public License
 #  along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+import discord
+from datetime import datetime
 from discord.ext import commands
 from dotenv import load_dotenv
 from os import getenv
 from pony import orm
 from santabot.db import db
+from subprocess import check_output
 
 
 load_dotenv()
@@ -36,6 +39,14 @@ santa.db = db
 @santa.event
 async def on_ready():
     print('> Santa Bot is online!')
+    commit_hash = check_output(['git', 'rev-parse', '--short', 'HEAD']).strip()
+    await santa.change_presence(
+        activity=discord.Game(
+            f'commit {commit_hash.decode("UTF-8")}',
+            # start=datetime.now()
+            # emoji=discord.PartialEmoji(name='\U0001F385\U0001F3FB')
+        )
+    )
 
 
 if __name__ == '__main__':
