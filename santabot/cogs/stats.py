@@ -82,12 +82,12 @@ class Stats(commands.Cog):
             stats_user = ctx.author
             stats_user_db = self.bot.db.get_or_create(User, id=ctx.author.id)
         else:  # if argument is not "me" or a mention, give global stats
-            all_time_presents = Present.calculate_all_time_presents()
-            active_presents = Present.calculate_active_presents()
+            all_time_presents = self.calculate_all_time_presents()
+            active_presents = self.calculate_active_presents()
             stolen_presents = all_time_presents - active_presents
-            self_presents = Present.calculate_all_self_presents()
+            self_presents = self.calculate_all_self_presents()
             non_self_presents = active_presents - self_presents
-            please_count = Present.calculate_please()
+            please_count = self.calculate_please()
             non_please_count = all_time_presents - please_count
             await ctx.send(
                 f"Stats for the server:\n"

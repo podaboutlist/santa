@@ -51,12 +51,25 @@ class Give(commands.Cog):
             recipient (discord.Member or str): Either a User @mention or a
                 word like 'me'.
             present_name (str): The name of the present.
+
+        Raises:
+            e: Any error that occurs while processing the command.
         """
         if isinstance(recipient, str) and recipient.lower() != "me":
             # They said something other than a username or "me"
             return
 
-        await self.__do_gifting(ctx, recipient, present_name)
+        with orm.db_session:
+            try:
+                await self.__do_gifting(ctx, recipient, present_name)
+            except e:
+                await ctx.send(
+                    'There was an error processing your command:\n'
+                    '```python\n'
+                    '{0}\n'
+                    '```'.format(e)
+                )
+                raise e
 
     # -------------------------------------------------------------------------
     # Discord.py `please` prefix for `give` command
@@ -79,12 +92,30 @@ class Give(commands.Cog):
             recipient (discord.Member or str]): Either the recipient of the
                 present (a Member), or the first word of the Present.
             present_name (str): The name of the present.
+
+        Raises:
+            e: Any error that occurs while processing the command.
         """
         if give.lower() != 'give':
             # They said something other than "please give"
             return
 
-        await self.__do_gifting(ctx, recipient, present_name, please=True)
+        with orm.db_session:
+            try:
+                await self.__do_gifting(
+                    ctx,
+                    recipient,
+                    present_name,
+                    please=True
+                )
+            except e:
+                await ctx.send(
+                    'There was an error processing your command:\n'
+                    '```python\n'
+                    '{0}\n'
+                    '```'.format(e)
+                )
+                raise e
 
     # -------------------------------------------------------------------------
     # Discord.py `gimme` command, equivalent to `give me`
@@ -101,13 +132,25 @@ class Give(commands.Cog):
         Args:
             ctx (discord.ext.commands.Context): Discord.py command context.
             present_name (str): The name of the present.
+
+        Raises:
+            e: Any error that occurs while processing the command.
         """
-        await self.__do_gifting(ctx, 'me', present_name)
+        with orm.db_session:
+            try:
+                await self.__do_gifting(ctx, 'me', present_name)
+            except e:
+                await ctx.send(
+                    'There was an error processing your command:\n'
+                    '```python\n'
+                    '{0}\n'
+                    '```'.format(e)
+                )
+                raise e
 
     # -------------------------------------------------------------------------
     # __do_gifting() handles the majority of the gift sending logic
     # -------------------------------------------------------------------------
-    @orm.db_session
     async def __do_gifting(
         self,
         ctx: discord.ext.commands.Context,
@@ -181,7 +224,8 @@ class Give(commands.Cog):
         cooldown = invoking_user.check_cooldown()
         if cooldown:
             delay = self.__to_minutes(cooldown)
-            minute_s = 'minutes' if delay != 1 else 'minute'
+            print(f'> delay is {delay}')
+            minute_s = 'minute' if delay == 1 else 'minutes'
 
             # No longer punishing the user with a cooldown reset if they
             # don't say please.
@@ -231,7 +275,6 @@ class Give(commands.Cog):
     # -------------------------------------------------------------------------
     # __give_present() handles the logic for a User who asked for a present
     # -------------------------------------------------------------------------
-    @orm.db_session
     def __give_present(
         self,
         invoking_user: discord.Member,
@@ -268,7 +311,6 @@ class Give(commands.Cog):
     # -------------------------------------------------------------------------
     # __send_present() handles the logic for sending gifts from User to User
     # -------------------------------------------------------------------------
-    @orm.db_session
     def __send_present(
         self,
         invoking_user: discord.Member,

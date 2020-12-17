@@ -20,6 +20,7 @@ from discord.ext import commands
 from dotenv import load_dotenv
 from os import getenv
 from pony import orm
+from psycopg2 import OperationalError
 from santabot.db import db
 
 
@@ -70,14 +71,18 @@ if __name__ == '__main__':
         db_pass = getenv('DB_PASS')
         db_table_prefix = getenv('DB_TABLE_PREFIX')
 
-        santa.db.bind(
-            provider='postgres',
-            host=db_host,
-            port=db_port,
-            user=db_user,
-            password=db_pass,
-            database=db_name
-        )
+        try:
+            santa.db.bind(
+                provider='postgres',
+                host=db_host,
+                port=db_port,
+                user=db_user,
+                password=db_pass,
+                database=db_name
+            )
+        except OperationalError as e:
+            print('> Error connecting to the PostgreSQL database:')
+            raise e
 
     print('> Generating database mapping...')
     santa.db.generate_mapping(create_tables=True)
