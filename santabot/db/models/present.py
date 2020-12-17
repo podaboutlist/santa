@@ -15,8 +15,6 @@ class Present(db.Entity):
     please = orm.Required(bool, default=False)
     date_received = orm.Required(datetime, default=datetime.now(), precision=6)
     date_stolen = orm.Optional(datetime)
-
-
     @orm.db_session
     def steal(self, timestamp=None) -> bool:
         """Marks this present as stolen by the Grinch
