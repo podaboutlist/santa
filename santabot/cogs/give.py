@@ -21,7 +21,6 @@ from discord.ext import commands
 from pony import orm
 from random import randint
 from math import ceil
-from ..db import db
 from ..db.models import Present, Server, User
 from ..grinch_manager import GrinchManager
 
@@ -260,7 +259,7 @@ class Give(commands.Cog):
 
         result = invoking_user.try_steal_presents()
 
-        db.commit()
+        self.bot.db.commit()
         return result
 
     # -------------------------------------------------------------------------
@@ -297,7 +296,7 @@ class Give(commands.Cog):
         recipient.increment_owned_presents()
         invoking_user.increment_gifted_presents()
 
-        db.commit()
+        self.bot.db.commit()
 
     # -------------------------------------------------------------------------
     # __to_minutes() is just `math.ciel()` with no `import math`
