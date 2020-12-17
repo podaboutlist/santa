@@ -148,7 +148,8 @@ class Stats(commands.Cog):
             int: Number of self-gifted presents.
         """
         return orm.count(
-            p for p in self.bot.db.Present if not p.stolen and p.owner.id == p.gifter.id
+            p for p in self.bot.db.Present
+            if not p.stolen and p.owner.id == p.gifter.id
         )
 
     @orm.db_session
