@@ -18,7 +18,6 @@ import discord
 import typing
 from discord.ext import commands
 from pony import orm
-from ..db import db
 from ..db.models import Present, Server, User
 
 
@@ -104,7 +103,6 @@ class Stats(commands.Cog):
                 f"To see another user's stats, use `@santa stats @username`."
             )
 
-            db.commit()
             return
 
         await ctx.send(
@@ -115,7 +113,53 @@ class Stats(commands.Cog):
             f'- {stats_user_db.grinch_visit_count} visits from the grinch'
         )
 
-        db.commit()
+    @orm.db_session
+    def calculate_all_time_presents(self) -> int:
+        """Calculate all time number of presents distributed.
+
+        Returns:
+            int: All time number of presents distributed.
+        """
+        return orm.count(p for p in self.bot.db.Present)
+
+    @orm.db_session
+    def calculate_active_presents(self) -> int:
+        """Calculate how many presents are currently not 'stolen'
+
+        Returns:
+            int: Number of non-stolen presents.
+        """
+        return orm.count(p for p in self.bot.db.Present if not p.stolen)
+
+    @orm.db_session
+    def calculate_all_stolen_presents(self) -> int:
+        """Calculate how many presents are currently 'stolen'
+
+        Returns:
+            int: Number of stolen presents.
+        """
+        return orm.count(p for p in self.bot.db.Present if p.stolen)
+
+    @orm.db_session
+    def calculate_all_self_presents(self) -> int:
+        """Calculate how many presents were given to a user by themselves
+
+        Returns:
+            int: Number of self-gifted presents.
+        """
+        return orm.count(
+            p for p in self.bot.db.Present
+            if not p.stolen and p.owner.id == p.gifter.id
+        )
+
+    @orm.db_session
+    def calculate_please(self) -> int:
+        """Calculate how many presents were given to a user by themselves
+
+        Returns:
+            int: Number of self-gifted presents.
+        """
+        return orm.count(p for p in self.bot.db.Present if p.please)
 
 
 def setup(bot):
