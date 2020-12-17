@@ -63,8 +63,8 @@ class Give(commands.Cog):
                 await ctx.send(
                     'There was an error processing your command:\n'
                     '```python\n'
-                    '{0}\n'format(e)
-                    '```'
+                    '{0}\n'
+                    '```'.format(e)
                 )
                 raise e
 
@@ -106,8 +106,8 @@ class Give(commands.Cog):
                 await ctx.send(
                     'There was an error processing your command:\n'
                     '```python\n'
-                    '{0}\n'format(e)
-                    '```'
+                    '{0}\n'
+                    '```'.format(e)
                 )
                 raise e
 
@@ -134,8 +134,8 @@ class Give(commands.Cog):
                 await ctx.send(
                     'There was an error processing your command:\n'
                     '```python\n'
-                    '{0}\n'format(e)
-                    '```'
+                    '{0}\n'
+                    '```'.format(e)
                 )
                 raise e
 
