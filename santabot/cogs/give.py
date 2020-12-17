@@ -52,6 +52,10 @@ class Give(commands.Cog):
                 word like 'me'.
             present_name (str): The name of the present.
         """
+        if isinstance(recipient, str) and recipient.lower() != "me":
+            # They said something other than a username or "me"
+            return
+
         await self.__do_gifting(ctx, recipient, present_name)
 
     # -------------------------------------------------------------------------
@@ -144,6 +148,10 @@ class Give(commands.Cog):
 
         # Send a present from one User to another
         if isinstance(recipient, discord.Member):
+            if recipient.id == invoking_user.id:
+                await ctx.send('Nice try {invoking_user.mention}...')
+                return
+
             cooldown = invoking_user.check_cooldown(sending_gift=True)
             if cooldown:
                 delay = self.__to_minutes(cooldown)
