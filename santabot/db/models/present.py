@@ -16,6 +16,11 @@ class Present(db.Entity):
     date_received = orm.Required(datetime, default=datetime.now(), precision=6)
     date_stolen = orm.Optional(datetime)
 
+    @orm.db_session
+    def __init__(self, *args, **kwargs):
+        kwargs['date_received'] = datetime.now()
+        super().__init__(*args, **kwargs)
+
     @staticmethod
     @orm.db_session
     def calculate_all_time_presents() -> int:
