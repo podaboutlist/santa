@@ -185,7 +185,8 @@ class User(db.Entity):
         else:
             presents = Present.select(
                 lambda p: p.owner.id == self.id and
-                p.stolen == is_stolen
+                p.stolen == is_stolen and
+                p.gifter is None
             )
 
         return presents.order_by(orm.desc(Present.date_received)).first()
