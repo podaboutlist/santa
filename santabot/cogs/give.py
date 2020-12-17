@@ -57,7 +57,16 @@ class Give(commands.Cog):
             return
 
         with orm.db_session:
-            await self.__do_gifting(ctx, recipient, present_name)
+            try:
+                await self.__do_gifting(ctx, recipient, present_name)
+            except e:
+                await ctx.send(
+                    'There was an error processing your command:\n'
+                    '```python\n'
+                    '{0}\n'format(e)
+                    '```'
+                )
+                raise e
 
     # -------------------------------------------------------------------------
     # Discord.py `please` prefix for `give` command
@@ -86,7 +95,21 @@ class Give(commands.Cog):
             return
 
         with orm.db_session:
-            await self.__do_gifting(ctx, recipient, present_name, please=True)
+            try:
+                await self.__do_gifting(
+                    ctx,
+                    recipient,
+                    present_name,
+                    please=True
+                )
+            except e:
+                await ctx.send(
+                    'There was an error processing your command:\n'
+                    '```python\n'
+                    '{0}\n'format(e)
+                    '```'
+                )
+                raise e
 
     # -------------------------------------------------------------------------
     # Discord.py `gimme` command, equivalent to `give me`
@@ -105,7 +128,16 @@ class Give(commands.Cog):
             present_name (str): The name of the present.
         """
         with orm.db_session:
-            await self.__do_gifting(ctx, 'me', present_name)
+            try:
+                await self.__do_gifting(ctx, 'me', present_name)
+            except e:
+                await ctx.send(
+                    'There was an error processing your command:\n'
+                    '```python\n'
+                    '{0}\n'format(e)
+                    '```'
+                )
+                raise e
 
     # -------------------------------------------------------------------------
     # __do_gifting() handles the majority of the gift sending logic
