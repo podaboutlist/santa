@@ -51,6 +51,9 @@ class Give(commands.Cog):
             recipient (discord.Member or str): Either a User @mention or a
                 word like 'me'.
             present_name (str): The name of the present.
+
+        Raises:
+            e: Any error that occurs while processing the command.
         """
         if isinstance(recipient, str) and recipient.lower() != "me":
             # They said something other than a username or "me"
@@ -89,6 +92,9 @@ class Give(commands.Cog):
             recipient (discord.Member or str]): Either the recipient of the
                 present (a Member), or the first word of the Present.
             present_name (str): The name of the present.
+
+        Raises:
+            e: Any error that occurs while processing the command.
         """
         if give.lower() != 'give':
             # They said something other than "please give"
@@ -126,6 +132,9 @@ class Give(commands.Cog):
         Args:
             ctx (discord.ext.commands.Context): Discord.py command context.
             present_name (str): The name of the present.
+
+        Raises:
+            e: Any error that occurs while processing the command.
         """
         with orm.db_session:
             try:
