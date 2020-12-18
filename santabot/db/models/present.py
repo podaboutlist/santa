@@ -13,8 +13,19 @@ class Present(db.Entity):
     gifter = orm.Optional(User)
     stolen = orm.Required(bool, default=False)
     please = orm.Required(bool, default=False)
-    date_received = orm.Required(datetime, default=datetime.now(), precision=6)
+    date_received = orm.Required(
+        datetime,
+        default=datetime(
+            year=1995, month=4, day=19, hour=9, minute=2
+        ),
+        precision=6
+    )
     date_stolen = orm.Optional(datetime)
+
+    @orm.db_session
+    def __init__(self, *args, **kwargs):
+        kwargs['date_received'] = datetime.now()
+        super().__init__(*args, **kwargs)
 
     @orm.db_session
     def steal(self, timestamp=None) -> bool:
