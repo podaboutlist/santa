@@ -18,16 +18,16 @@ import discord
 from discord.ext import commands
 
 
-class Invite(commands.Cog):
-    """Parent class for the invite command.
+class About(commands.Cog):
+    """Parent class for the about command.
     """
 
     def __init__(self, bot):
         self.bot = bot
 
     @commands.command()
-    async def invite(self, ctx: commands.Context):
-        """@santa invite: Returns developer info to the requester.
+    async def about(self, ctx: commands.Context):
+        """@santa about: Returns developer info to the requester.
 
         Args:
             ctx (discord.ext.commands.Context): Discord.py command context.
@@ -61,4 +61,4 @@ class Invite(commands.Cog):
 
 
 def setup(bot):
-    bot.add_cog(Invite(bot))
+    bot.add_cog(About(bot))
