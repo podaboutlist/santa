@@ -100,8 +100,8 @@ class Stats(commands.Cog):
                 inline=False
             ).add_field(
                 name='Successful presents',
-                value=f'Of the {active_presents} presents that found their way '
-                      f'to their recipients, {self_presents} were given '
+                value=f'Of the {active_presents} presents that found their '
+                      f'way to their recipients, {self_presents} were given '
                       f'by their owners to themselves and {non_self_presents} '
                       f'were given to someone else.',
                 inline=False
