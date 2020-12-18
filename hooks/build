@@ -1,0 +1,8 @@
+#!/bin/bash
+# Overrides default build command for Docker Hub
+
+docker build \
+    --build-arg COMMIT_SHA="$(git rev-parse --short HEAD)" \
+    -f $DOCKERFILE_PATH \
+    -t $IMAGE_NAME \
+    .
