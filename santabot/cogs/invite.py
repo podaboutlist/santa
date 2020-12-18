@@ -34,8 +34,7 @@ class Invite(commands.Cog):
         """
         await ctx.channel.trigger_typing()
         await ctx.send(embed=discord.Embed(
-            title='SantaBot',
-            description='Created by the Podcast About List Code Monkeys'
+            title='About SantaBot',
         ).set_thumbnail(
             url=ctx.me.avatar_url
         ).add_field(
@@ -50,6 +49,14 @@ class Invite(commands.Cog):
             name='GitHub',
             value=f'https://github.com/Podcast-About-List/santa',
             inline=False
+        ).add_field(
+            name='Want SantaBot on your server?',
+            value=f'[Click here to add SantaBot to your server]'
+                  f'(https://discord.com/oauth2/authorize?client_id='
+                  f'785952609592016896&scope=bot&permissions=537250880)',
+            inline=False
+        ).set_footer(
+            text='Created by the Podcast About List Code Monkeys'
         ))
 
 
