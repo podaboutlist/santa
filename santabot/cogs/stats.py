@@ -89,29 +89,61 @@ class Stats(commands.Cog):
             non_self_presents = active_presents - self_presents
             please_count = self.calculate_please()
             non_please_count = all_time_presents - please_count
-            await ctx.send(
-                f"Stats for the server:\n"
-                f"{all_time_presents} have been gifted, "
-                f"{stolen_presents} of which were stolen by The Grinch.\n"
-                f"Of the {active_presents} that found their way to their "
-                f"recipients, {self_presents} were given by their owners "
-                f"to themselves and {non_self_presents} were given to "
-                f"someone else.\n{please_count} users have said please "
-                f"when asking for a gift, while {non_please_count} "
-                f"rude children did not.\n"
-                f"To see your personal stats, use `@santa stats me`.\n"
-                f"To see another user's stats, use `@santa stats @username`."
-            )
-
+            await ctx.send(embed=discord.Embed(
+                title='Stats for the server'
+            ).set_thumbnail(
+                url=ctx.guild.icon_url
+            ).add_field(
+                name='Total presents given',
+                value=f'{all_time_presents} presents have been gifted, '
+                      f'of which {stolen_presents} were stolen by The Grinch.',
+                inline=False
+            ).add_field(
+                name='Successful presents',
+                value=f'Of the {active_presents} presents that found their '
+                      f'way to their recipients, {self_presents} were given '
+                      f'by their owners to themselves and {non_self_presents} '
+                      f'were given to someone else.',
+                inline=False
+            ).add_field(
+                name="The magic word",
+                value=f'{please_count} users have said please when asking '
+                      f'for a present, while {non_please_count} were rude '
+                      f'little children who did not',
+                inline=False
+            ).set_footer(
+                text='To see your personal stats, '
+                     'use "@santa stats me"\n'
+                     'To see another user\'s stats, '
+                     'use "@santa stats @username"',
+                icon_url=ctx.me.avatar_url
+            ))
             return
 
-        await ctx.send(
-            f'Stats for {stats_user.mention}:\n'
-            f'- {stats_user_db.owned_present_count} owned presents\n'
-            f'- {stats_user_db.stolen_present_count} stolen presents\n'
-            f'- {stats_user_db.gifted_present_count} gifted presents\n'
-            f'- {stats_user_db.grinch_visit_count} visits from the grinch'
-        )
+        await ctx.send(embed=discord.Embed(
+            title=f'Stats for {stats_user.display_name}'
+        ).set_thumbnail(
+            url=stats_user.avatar_url
+        ).add_field(
+            name='Owned',
+            value=f'{stats_user_db.owned_present_count}',
+            inline=True
+        ).add_field(
+            name='Stolen',
+            value=f'{stats_user_db.stolen_present_count}',
+            inline=True
+        ).add_field(
+            name='Gifted',
+            value=f'{stats_user_db.gifted_present_count}',
+            inline=True
+        ).add_field(
+            name='Grinch Visits',
+            value=f'{stats_user_db.grinch_visit_count}',
+            inline=False
+        ).set_footer(
+            text='Try "@santa stats global" for global stats',
+            icon_url=ctx.me.avatar_url
+        ))
 
     @orm.db_session
     def calculate_all_time_presents(self) -> int:
