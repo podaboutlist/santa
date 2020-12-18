@@ -14,6 +14,7 @@
 #  You should have received a copy of the GNU Affero General Public License
 #  along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+import discord
 from discord.ext import commands
 
 
@@ -32,16 +33,25 @@ class Invite(commands.Cog):
             ctx (discord.ext.commands.Context): Discord.py command context.
         """
         await ctx.channel.trigger_typing()
-        await ctx.send(
-            "This bot was made by and is hosted by "
-            "the Podcast About List Code Monkeys\n"
-            "Check out the GitHub repo here: "
-            "https://github.com/Podcast-About-List/santa\n"
-            "Join the Podcast About List discord here: "
-            "https://podaboutli.st/discord"
-        )
+        await ctx.send(embed=discord.Embed(
+            title='SantaBot',
+            description='Created by the Podcast About List Code Monkeys'
+        ).set_thumbnail(
+            url=ctx.me.avatar_url
+        ).add_field(
+            name='Podcast About List',
+            value=f'https://podaboutli.st/',
+            inline=False
+        ).add_field(
+            name='Discord',
+            value=f'https://podaboutli.st/discord',
+            inline=False
+        ).add_field(
+            name='GitHub',
+            value=f'https://github.com/Podcast-About-List/santa',
+            inline=False
+        ))
 
 
 def setup(bot):
-
     bot.add_cog(Invite(bot))
