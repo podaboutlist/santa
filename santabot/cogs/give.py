@@ -70,6 +70,8 @@ class Give(commands.Cog):
                     '```'.format(e)
                 )
                 raise e
+            else:
+                self.bot.db.commit()
 
     # -------------------------------------------------------------------------
     # Discord.py `please` prefix for `give` command
@@ -116,6 +118,8 @@ class Give(commands.Cog):
                     '```'.format(e)
                 )
                 raise e
+            else:
+                self.bot.db.commit()
 
     # -------------------------------------------------------------------------
     # Discord.py `gimme` command, equivalent to `give me`
@@ -147,6 +151,8 @@ class Give(commands.Cog):
                     '```'.format(e)
                 )
                 raise e
+            else:
+                self.bot.db.commit()
 
     # -------------------------------------------------------------------------
     # __do_gifting() handles the majority of the gift sending logic
