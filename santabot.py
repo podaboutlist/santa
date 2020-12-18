@@ -16,6 +16,7 @@
 #  You should have received a copy of the GNU Affero General Public License
 #  along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+import discord
 from discord.ext import commands
 from dotenv import load_dotenv
 from os import getenv
@@ -37,6 +38,20 @@ santa.db = db
 @santa.event
 async def on_ready():
     print('> Santa Bot is online!')
+    commit_sha = getenv('GIT_COMMIT_SHA')
+
+    if not commit_sha:
+        print('> GIT_COMMIT_SHA not defined, not setting presence.')
+        return
+
+    await santa.change_presence(
+        activity=discord.Game(
+            f"commit {commit_sha}",
+            # These options aren't available to bots. Maybe they will be soon.
+            # start=datetime.now()
+            # emoji=discord.PartialEmoji(name='\U0001F385\U0001F3FB')
+        )
+    )
 
 
 if __name__ == '__main__':
@@ -49,13 +64,13 @@ if __name__ == '__main__':
             .format(bot_token)
         )
 
-    use_sqlite = getenv('USE_SQLITE')
-    sql_debug = getenv('SQL_DEBUG', False)
-
+    # TODO: Convert this bool check to a function or something
+    use_sqlite = getenv('USE_SQLITE', 'True').lower() == 'true'
+    sql_debug = getenv('SQL_DEBUG', 'False').lower() == 'true'
     orm.set_sql_debug(sql_debug)
 
     print('> Initialising database connection...')
-    if use_sqlite.lower() == 'true':  # No easy way to convert str to bool :/
+    if use_sqlite:
         print('> Using SQLite DB for testing.')
         santa.db.bind(
             provider='sqlite',
