@@ -17,6 +17,7 @@
 #  along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import discord
+import wordfilter
 from discord.ext import commands
 from dotenv import load_dotenv
 from os import getenv
@@ -109,6 +110,11 @@ if __name__ == '__main__':
         # TODO: Error handling when loading cogs
         santa.load_extension(cog)
         print('> Loaded cog ', cog)
+
+    # Add wordfilter object to the bot in case we ever need to define custom
+    # words to filter. It comes with a decently robust default list.
+    santa.wordfilter = wordfilter
+    santa.wordfilter.add_words(['shit', 'fuck'])
 
     print('> Logging into Discord...')
     santa.run(bot_token)
