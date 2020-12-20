@@ -53,7 +53,7 @@ class Give(commands.Cog):
             present_name (str): The name of the present.
 
         Raises:
-            e: Any error that occurs while processing the command.
+            Exception: Any error that occurs while processing the command.
         """
         if isinstance(recipient, str) and recipient.lower() != "me":
             # They said something other than a username or "me"
@@ -62,7 +62,7 @@ class Give(commands.Cog):
         with orm.db_session:
             try:
                 await self.__do_gifting(ctx, recipient, present_name)
-            except e:
+            except Exception as e:
                 await ctx.send(
                     'There was an error processing your command:\n'
                     '```python\n'
@@ -96,7 +96,7 @@ class Give(commands.Cog):
             present_name (str): The name of the present.
 
         Raises:
-            e: Any error that occurs while processing the command.
+            Exception: Any error that occurs while processing the command.
         """
         if give.lower() != 'give':
             # They said something other than "please give"
@@ -110,7 +110,7 @@ class Give(commands.Cog):
                     present_name,
                     please=True
                 )
-            except e:
+            except Exception as e:
                 await ctx.send(
                     'There was an error processing your command:\n'
                     '```python\n'
@@ -138,12 +138,12 @@ class Give(commands.Cog):
             present_name (str): The name of the present.
 
         Raises:
-            e: Any error that occurs while processing the command.
+            Exception: Any error that occurs while processing the command.
         """
         with orm.db_session:
             try:
                 await self.__do_gifting(ctx, 'me', present_name)
-            except e:
+            except Exception as e:
                 await ctx.send(
                     'There was an error processing your command:\n'
                     '```python\n'
@@ -195,10 +195,21 @@ class Give(commands.Cog):
         # Let the User know we're doing something if this takes a while
         await ctx.trigger_typing()
 
+        # Don't gift the present if there's a bad word in the name
+        if self.bot.wordfilter.blacklisted(present_name):
+            await ctx.send(
+                f"I'm sorry {ctx.author.mention}, but that doesn't sound "
+                "like the type of gift I deliver."
+            )
+            return
+
         # Send a present from one User to another
         if isinstance(recipient, discord.Member):
             if recipient.id == invoking_user.id:
-                await ctx.send(f'Nice try {invoking_user.mention}...')
+                await ctx.send(
+                    f"Nice try {ctx.author.mention}, but ol' Santa Claus is"
+                    "a little smarter than that..."
+                )
                 return
 
             cooldown = invoking_user.check_cooldown(sending_gift=True)
