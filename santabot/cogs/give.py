@@ -42,7 +42,7 @@ class Give(commands.Cog):
         ctx: discord.ext.commands.Context,
         recipient: typing.Union[discord.Member, str],
         *,
-        present_name: str
+        present_name: str = ""
     ):
         """Command to request a present for oneself or another User
 
@@ -83,7 +83,7 @@ class Give(commands.Cog):
         give: str,  # give
         recipient: typing.Union[discord.Member, str],  # @user or 'me'
         *,
-        present_name: str
+        present_name: str = ""
     ):
         """Command for pleasantly asking for a present.
 
@@ -129,7 +129,7 @@ class Give(commands.Cog):
         self,
         ctx: discord.ext.commands.Context,
         *,
-        present_name: str
+        present_name: str = ""
     ):
         """Command to request a present for oneself
 
@@ -161,7 +161,7 @@ class Give(commands.Cog):
         self,
         ctx: discord.ext.commands.Context,
         recipient: typing.Union[discord.Member, str],
-        present_name: str,
+        present_name: str = "",
         *,
         please=False
     ):
@@ -250,6 +250,16 @@ class Give(commands.Cog):
                 "Sorry, {0}, but you have to chill with the presents. "
                 "Wait another **{1} {2}** and I'll give you another hit."
                 .format(ctx.author.mention, delay, minute_s)
+            )
+
+            return
+
+        if present_name.isspace() or not present_name:
+
+            await ctx.send(
+                "Ho ho ho! {0}, it looks like you forgot to tell "
+                "me what present you wanted!"
+                .format(ctx.author.mention)
             )
 
             return
