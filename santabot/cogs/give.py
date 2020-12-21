@@ -254,7 +254,7 @@ class Give(commands.Cog):
 
             return
 
-        if present_name.isspace() or not:
+        if present_name.isspace() or not present_name:
 
             await ctx.send(
                 "Ho ho ho! {0}, it looks like you forgot to tell "
