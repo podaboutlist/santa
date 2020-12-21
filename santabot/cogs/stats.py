@@ -33,7 +33,7 @@ class Stats(commands.Cog):
     async def stats(
             self,
             ctx: discord.ext.commands.Context,
-            subject: typing.Union[discord.Member, str]
+            subject: typing.Union[discord.Member, str] = ""
     ):
         """Command to get stats for a player or the server
 
@@ -51,7 +51,7 @@ class Stats(commands.Cog):
     async def __make_stats(
             self,
             ctx: discord.ext.commands.Context,
-            subject: typing.Union[discord.Member, str]
+            subject: typing.Union[discord.Member, str] = ""
     ):
         """Underlying logic for `@santa stats`
 
