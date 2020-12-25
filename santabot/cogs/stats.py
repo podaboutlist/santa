@@ -169,7 +169,7 @@ class Stats(commands.Cog):
                 break
             user = self.bot.get_user(user_obj.id)
             embed.add_field(
-                name=f'{i}.',
+                name=f'{i}: {user.mention}',
                 value=f'{user.owned_present_count} presents'
             )
         embed.set_footer(
