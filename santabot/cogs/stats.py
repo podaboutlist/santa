@@ -146,14 +146,14 @@ class Stats(commands.Cog):
         ))
 
     # -------------------------------------------------------------------------
-    # Discord.py `leaderboard` command
+    # Discord.py `top` command
     # -------------------------------------------------------------------------
     @commands.command()
-    async def leaderboard(
+    async def top(
             self,
             ctx: discord.ext.commands.Context,
     ):
-        """Command to get the leaderboard for the server
+        """Command to get the top 10 for the server
 
         Args:
             ctx (discord.ext.commands.Context): Discord.py command context.
