@@ -170,7 +170,8 @@ class Stats(commands.Cog):
             user = self.bot.get_user(user_obj.id)
             embed.add_field(
                 name=f'{i}: {user.mention}',
-                value=f'{user.owned_present_count} presents'
+                value=f'{user.owned_present_count} presents',
+                inline=False
             )
         embed.set_footer(
             text='Try "@santa about" to learn more about me',
