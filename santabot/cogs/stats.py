@@ -145,6 +145,48 @@ class Stats(commands.Cog):
             icon_url=ctx.me.avatar_url
         ))
 
+    # -------------------------------------------------------------------------
+    # Discord.py `top` command
+    # -------------------------------------------------------------------------
+    @commands.command()
+    async def top(
+            self,
+            ctx: discord.ext.commands.Context,
+    ):
+        """Command to get the top 10 for the server
+
+        Args:
+            ctx (discord.ext.commands.Context): Discord.py command context.
+        """
+        embed = discord.Embed(
+            title='Leaderboard',
+            description='These users have the most presents'
+        ).set_thumbnail(
+            url=ctx.guild.icon_url
+        )
+        for i, user_obj in enumerate(self.users_by_present()):
+            if i > 10:
+                break
+            user = self.bot.get_user(user_obj.id)
+            embed.add_field(
+                name=f'{i}: {user.mention}',
+                value=f'{user.owned_present_count} presents',
+                inline=False
+            )
+        embed.set_footer(
+            text='Try "@santa about" to learn more about me',
+            icon_url=ctx.me.avatar_url
+        )
+        pass
+
+    @orm.db_session
+    def users_by_present(self):
+        return orm.select(
+            u for u in User
+        ).order_by(
+            lambda u: u.owned_present_count
+        ).page(1)
+
     @orm.db_session
     def calculate_all_time_presents(self) -> int:
         """Calculate all time number of presents distributed.
